@@ -60,9 +60,9 @@ class VisualAnalyzer {
     try {
       // We'll use the Tesseract.js worker from a CDN
       // In a real extension, you'd bundle this with your code
-      const { createWorker } = await import('https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js');
-      
-      this.ocrWorker = await createWorker('eng');
+      // const { createWorker } = await import('https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js');
+      const Tesseract = await import('tesseract.js');
+      this.ocrWorker = await Tesseract.createWorker('eng');
       
       return true;
     } catch (error) {

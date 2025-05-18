@@ -18,14 +18,14 @@ Welcome to CandidAI, your AI-powered interview assistant! This guide will help y
 
 ### From Chrome Web Store
 
-1. Visit the [CandidAI Chrome Web Store page](https://chrome.google.com/webstore/detail/candidai/placeholder)
+1. Visit the [CandidAI Chrome Web Store page](hhttps://github.com/veerababumanyam/CandidAI)
 2. Click "Add to Chrome"
 3. Follow the on-screen instructions to complete installation
 4. Once installed, you'll see the CandidAI icon in your browser toolbar
 
 ### Manual Installation (Development)
 
-1. Download the extension files from the [GitHub repository](https://github.com/candidai/extension)
+1. Download the extension files from the [GitHub repository](https://github.com/veerababumanyam/CandidAI)
 2. Open Chrome and navigate to `chrome://extensions/`
 3. Enable "Developer mode" using the toggle in the top right
 4. Click "Load unpacked" and select the downloaded folder

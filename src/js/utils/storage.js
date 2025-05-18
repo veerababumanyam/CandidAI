@@ -17,6 +17,7 @@ const QUOTA_WARNING_THRESHOLD = 0.8; // 80% of quota
 const StorageUtil = {
   // Internal state
   _initialized: false,
+  _isInitializing: false,
   _pendingOperations: [],
 
   /**
@@ -27,6 +28,14 @@ const StorageUtil = {
     if (this._initialized) {
       return true;
     }
+
+    // Prevent recursive initialization
+    if (this._isInitializing) {
+      console.warn('Storage initialization already in progress');
+      return false;
+    }
+
+    this._isInitializing = true;
 
     try {
       // Check if storage is available
@@ -41,6 +50,8 @@ const StorageUtil = {
     } catch (error) {
       console.error('Error initializing storage utility:', error);
       return false;
+    } finally {
+      this._isInitializing = false;
     }
   },
 
@@ -54,19 +65,43 @@ const StorageUtil = {
       const testKey = '_storage_test_';
       const testValue = Date.now().toString();
 
-      // Try to write to storage
-      await this.set({ [testKey]: testValue });
+      // Try to write to storage directly (without using this.set to avoid recursion)
+      await new Promise((resolve, reject) => {
+        chrome.storage.local.set({ [testKey]: testValue }, () => {
+          if (chrome.runtime.lastError) {
+            reject(chrome.runtime.lastError);
+          } else {
+            resolve();
+          }
+        });
+      });
 
-      // Try to read from storage
-      const result = await this.get(testKey);
+      // Try to read from storage directly (without using this.get to avoid recursion)
+      const result = await new Promise((resolve, reject) => {
+        chrome.storage.local.get(testKey, (items) => {
+          if (chrome.runtime.lastError) {
+            reject(chrome.runtime.lastError);
+          } else {
+            resolve(items[testKey]);
+          }
+        });
+      });
 
       // Verify the value
       if (result !== testValue) {
         throw new Error('Storage test failed: value mismatch');
       }
 
-      // Clean up
-      await this.remove(testKey);
+      // Clean up directly (without using this.remove to avoid recursion)
+      await new Promise((resolve, reject) => {
+        chrome.storage.local.remove(testKey, () => {
+          if (chrome.runtime.lastError) {
+            reject(chrome.runtime.lastError);
+          } else {
+            resolve();
+          }
+        });
+      });
 
       return true;
     } catch (error) {
@@ -82,7 +117,17 @@ const StorageUtil = {
    */
   _checkQuota: async function() {
     try {
-      const bytesInUse = await this.getBytesInUse();
+      // Get bytes in use directly (without using this.getBytesInUse to avoid recursion)
+      const bytesInUse = await new Promise((resolve, reject) => {
+        chrome.storage.local.getBytesInUse(null, (bytesInUse) => {
+          if (chrome.runtime.lastError) {
+            reject(chrome.runtime.lastError);
+          } else {
+            resolve(bytesInUse);
+          }
+        });
+      });
+
       const quotaPercentage = bytesInUse / STORAGE_QUOTA_BYTES;
 
       if (quotaPercentage > QUOTA_WARNING_THRESHOLD) {
@@ -125,7 +170,26 @@ const StorageUtil = {
   get: async function(keys) {
     // Initialize if needed
     if (!this._initialized) {
-      await this.initialize();
+      // To prevent recursion, we'll check if we're in the middle of initialization
+      if (this._isInitializing) {
+        // If we're already initializing, just use the direct chrome API
+        return new Promise((resolve, reject) => {
+          chrome.storage.local.get(keys, (result) => {
+            if (chrome.runtime.lastError) {
+              reject(chrome.runtime.lastError);
+            } else {
+              // If a single key was requested, return just that value
+              if (typeof keys === 'string') {
+                resolve(result[keys]);
+              } else {
+                resolve(result);
+              }
+            }
+          });
+        });
+      } else {
+        await this.initialize();
+      }
     }
 
     // Use retry logic
@@ -155,7 +219,21 @@ const StorageUtil = {
   set: async function(items) {
     // Initialize if needed
     if (!this._initialized) {
-      await this.initialize();
+      // To prevent recursion, we'll check if we're in the middle of initialization
+      if (this._isInitializing) {
+        // If we're already initializing, just use the direct chrome API
+        return new Promise((resolve, reject) => {
+          chrome.storage.local.set(items, () => {
+            if (chrome.runtime.lastError) {
+              reject(chrome.runtime.lastError);
+            } else {
+              resolve();
+            }
+          });
+        });
+      } else {
+        await this.initialize();
+      }
     }
 
     // Validate items
@@ -195,7 +273,21 @@ const StorageUtil = {
   remove: async function(keys) {
     // Initialize if needed
     if (!this._initialized) {
-      await this.initialize();
+      // To prevent recursion, we'll check if we're in the middle of initialization
+      if (this._isInitializing) {
+        // If we're already initializing, just use the direct chrome API
+        return new Promise((resolve, reject) => {
+          chrome.storage.local.remove(keys, () => {
+            if (chrome.runtime.lastError) {
+              reject(chrome.runtime.lastError);
+            } else {
+              resolve();
+            }
+          });
+        });
+      } else {
+        await this.initialize();
+      }
     }
 
     // Validate keys

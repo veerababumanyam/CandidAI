@@ -9,7 +9,8 @@ module.exports = {
     'sidepanel/sidepanel': './src/sidepanel/sidepanel.js',
     'options/options': './src/options/options.js',
     'content/content': './src/content/content.js',
-    'offscreen/offscreen': './src/offscreen/offscreen.js'
+    'offscreen/offscreen': './src/offscreen/offscreen.js',
+    'visual-analysis': './src/visual-analysis.js'
   },
   output: {
     path: path.resolve(__dirname, 'dist'),
@@ -21,12 +22,7 @@ module.exports = {
       {
         test: /\.js$/,
         exclude: /node_modules/,
-        use: {
-          loader: 'babel-loader',
-          options: {
-            presets: ['@babel/preset-env']
-          }
-        }
+        use: 'babel-loader'
       },
       {
         test: /\.css$/,
@@ -57,7 +53,8 @@ module.exports = {
         { from: 'src/manifest.json', to: 'manifest.json' },
         { from: 'src/css', to: 'css' },
         { from: 'icons/logos', to: 'icons' },
-        { from: 'src/assets', to: 'assets', noErrorOnMissing: true }
+        { from: 'src/assets', to: 'assets', noErrorOnMissing: true },
+        { from: 'src/_locales', to: '_locales' }
       ]
     }),
     new HtmlWebpackPlugin({
@@ -74,6 +71,11 @@ module.exports = {
       template: './src/offscreen/offscreen.html',
       filename: 'offscreen/offscreen.html',
       chunks: ['offscreen/offscreen']
+    }),
+    new HtmlWebpackPlugin({
+      template: './src/visual-analysis.html',
+      filename: 'visual-analysis.html',
+      chunks: ['visual-analysis']
     })
   ],
   resolve: {
