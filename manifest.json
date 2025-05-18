@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "CandidAI",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "AI-powered interview assistant for job seekers",
   "icons": {
     "16": "icons/logos/logo5.png",
