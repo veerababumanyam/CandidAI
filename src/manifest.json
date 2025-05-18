@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "__MSG_appName__",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "__MSG_appDescription__",
   "default_locale": "en",
   "icons": {
@@ -10,7 +10,7 @@
     "128": "icons/logo3.png"
   },
   "action": {
-    "default_title": "CandidAI",
+    "default_title": "CandidAI - Click to open side panel",
     "default_icon": {
       "16": "icons/logo5.png",
       "48": "icons/logo4.png",
@@ -31,7 +31,9 @@
     "notifications",
     "scripting",
     "activeTab",
-    "offscreen"
+    "offscreen",
+    "identity",
+    "identity.email"
   ],
   "optional_permissions": [
     "desktopCapture"
@@ -59,6 +61,19 @@
       ],
       "js": ["content/platform-integration.js"],
       "run_at": "document_idle"
+    }
+  ],
+  "oauth2": {
+    "client_id": "YOUR_ACTUAL_CLIENT_ID.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/userinfo.email",
+      "https://www.googleapis.com/auth/userinfo.profile"
+    ]
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["assets/*", "icons/*", "css/*", "offscreen/offscreen.html"],
+      "matches": ["<all_urls>"]
     }
   ]
 }

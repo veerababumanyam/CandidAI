@@ -9,528 +9,799 @@ import * as i18n from '../js/utils/i18n.js';
 document.addEventListener('DOMContentLoaded', async () => {
   // Initialize i18n
   await i18n.initialize();
-  // DOM Elements - Main Controls
+
+  // ===== DOM Elements =====
+  // Main Controls
   const toggleListeningButton = document.getElementById('toggleListeningButton');
-  const statusText = document.getElementById('statusText');
-  const platformIndicator = document.getElementById('platformIndicator');
-  const transcribedQuestion = document.getElementById('transcribedQuestion');
-  const aiSuggestions = document.getElementById('aiSuggestions');
-
-  // DOM Elements - Chat
-  const chatInput = document.getElementById('chatInput');
-  const sendButton = document.getElementById('sendButton');
-  const chatMessages = document.getElementById('chatMessages');
-  const clearChatButton = document.getElementById('clearChat');
-
-  // DOM Elements - Controls
+  const visualAnalysisButton = document.getElementById('visualAnalysisButton');
   const settingsButton = document.getElementById('settingsButton');
   const toggleThemeButton = document.getElementById('toggleThemeButton');
-  const toggleTranscriptionButton = document.getElementById('toggleTranscriptionVisibility');
-  const copyToClipboardButton = document.getElementById('copyToClipboard');
+  const statusText = document.getElementById('statusText');
+  const platformIndicator = document.getElementById('platformIndicator');
+
+  // Chat Elements
+  const chatInput = document.getElementById('chatInput');
+  const sendMessageButton = document.getElementById('sendMessageButton');
+  const chatMessages = document.getElementById('chatMessages');
+
+  // State
+  let isListening = false;
+  let isProcessing = false;
+  let interimTranscript = '';
+  let interimTranscriptTimeout = null;
+  let speechSynthesis = window.speechSynthesis;
+  let voices = [];
+
+  // Initialize speech synthesis voices when they become available
+  const loadBasicVoices = () => {
+    voices = speechSynthesis.getVoices();
+    // Filter for English voices
+    return voices.filter(voice => voice.lang.includes('en'));
+  };
+
+  if (speechSynthesis.onvoiceschanged !== undefined) {
+    speechSynthesis.onvoiceschanged = loadBasicVoices;
+  }
+
+  // Load voices immediately if already available
+  loadBasicVoices();
+
+  // Listen for messages from the background script
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === 'transcription') {
+      // Handle transcription updates
+      if (message.isFinal) {
+        // If this is a final transcription, add it as a user message
+        if (message.text && message.text.trim()) {
+          addChatMessage('user', message.text);
+        }
+      } else {
+        // For interim results, update the UI or show a typing indicator
+        updateStatus(`Listening: ${message.text}`);
+      }
+    } else if (message.action === 'aiResponse') {
+      // Handle AI response
+      if (message.text) {
+        addChatMessage('ai', message.text, message.metadata);
+      }
+    } else if (message.action === 'error') {
+      // Handle errors
+      console.error('Error from background:', message.error);
+      showStatusMessage(`Error: ${message.error}`);
+    } else if (message.action === 'status') {
+      // Handle status updates
+      updateStatus(message.text);
+    }
+
+    // Return true to indicate we want to send a response asynchronously
+    return true;
+  });
+
+  // Initialize the UI
+  function initializeUI() {
+    console.log('Initializing UI...');
+
+    // Set up event listeners for footer links
+    if (helpLink) {
+      helpLink.addEventListener('click', openHelpPage);
+    }
+
+    if (feedbackLink) {
+      feedbackLink.addEventListener('click', openFeedbackForm);
+    }
+
+    // Set up event listener for the send button
+    if (document.getElementById('sendButton')) {
+      document.getElementById('sendButton').addEventListener('click', sendChatMessage);
+    }
+
+    // Set up event listener for the transcription visibility toggle
+    const toggleTranscriptionButton = document.getElementById('toggleTranscriptionVisibility');
+    if (toggleTranscriptionButton) {
+      toggleTranscriptionButton.addEventListener('click', toggleTranscriptionVisibility);
+    }
+
+    // Set up event listeners for AI Suggestions controls
+    setupAISuggestionsControls();
+
+    // Check for microphone permissions
+    checkMicrophonePermission();
+
+    // Load saved accessibility settings
+    loadAccessibilitySettings();
+
+    console.log('UI initialization complete');
+  }
+
+  /**
+   * Sets up event listeners for AI Suggestions controls
+   */
+  function setupAISuggestionsControls() {
+    // Copy button
+    const copyButton = document.getElementById('copyButton');
+    if (copyButton) {
+      copyButton.addEventListener('click', () => {
+        const suggestionsBox = document.getElementById('aiSuggestions');
+        if (suggestionsBox && suggestionsBox.textContent.trim()) {
+          copyToClipboard(suggestionsBox.textContent);
+
+          // Visual feedback
+          copyButton.classList.add('active');
+          setTimeout(() => {
+            copyButton.classList.remove('active');
+          }, 800);
+        } else {
+          showStatusMessage('No content to copy', 'info');
+        }
+      });
+    }
+
+    // Speak button
+    const speakButton = document.getElementById('speakButton');
+    if (speakButton) {
+      speakButton.addEventListener('click', () => {
+        const suggestionsBox = document.getElementById('aiSuggestions');
+        if (suggestionsBox && suggestionsBox.textContent.trim()) {
+          // If already speaking (button is active), this will stop speech
+          if (speakButton.classList.contains('active')) {
+            speechSynthesis.cancel();
+            speakButton.classList.remove('active');
+            showStatusMessage('Speech stopped', 'info');
+          } else {
+            speakMessage(suggestionsBox.textContent);
+
+            // Visual feedback
+            speakButton.classList.add('active');
+          }
+        } else {
+          showStatusMessage('No content to speak', 'info');
+        }
+      });
+    }
+
+    // Refresh button
+    const refreshButton = document.getElementById('refreshButton');
+    if (refreshButton) {
+      refreshButton.addEventListener('click', () => {
+        // Check if there's content to refresh
+        const lastUserMessage = getLastUserMessage();
+        if (lastUserMessage) {
+          // Visual feedback
+          refreshButton.classList.add('active');
+
+          // Regenerate the answer
+          regenerateAnswer();
+
+          setTimeout(() => {
+            refreshButton.classList.remove('active');
+          }, 800);
+        } else {
+          showStatusMessage('No previous question to regenerate answer for', 'info');
+        }
+      });
+    }
+
+    // Increase font size button
+    const increaseFontButton = document.getElementById('increaseFontButton');
+    if (increaseFontButton) {
+      increaseFontButton.addEventListener('click', () => {
+        // Visual feedback
+        increaseFontButton.classList.add('active');
+
+        // Increase font size
+        increaseFontSize();
+
+        setTimeout(() => {
+          increaseFontButton.classList.remove('active');
+        }, 800);
+      });
+    }
+
+    // Decrease font size button
+    const decreaseFontButton = document.getElementById('decreaseFontButton');
+    if (decreaseFontButton) {
+      decreaseFontButton.addEventListener('click', () => {
+        // Visual feedback
+        decreaseFontButton.classList.add('active');
+
+        // Decrease font size
+        decreaseFontSize();
+
+        setTimeout(() => {
+          decreaseFontButton.classList.remove('active');
+        }, 800);
+      });
+    }
+
+    // Toggle autoscroll button
+    const toggleAutoscrollButton = document.getElementById('toggleAutoscrollButton');
+    if (toggleAutoscrollButton) {
+      toggleAutoscrollButton.addEventListener('click', () => {
+        toggleAutoscroll();
+      });
+
+      // Initialize button state
+      updateAutoscrollButtonState();
+    }
+  }
+
+  // Call the initialization function
+  initializeUI();
+
+  // Load saved theme preference
+  loadThemePreference();
+
+  // Focus the chat input when the panel is opened
+  if (chatInput) {
+    chatInput.focus();
+  }
+  const pitchRange = document.getElementById('pitchRange');
+  const volumeRange = document.getElementById('volumeRange');
 
   // DOM Elements - Footer
   const helpLink = document.getElementById('helpLink');
   const feedbackLink = document.getElementById('feedbackLink');
 
   // State
-  let isListening = false;
   let currentPlatform = null;
-  let interimTranscriptTimeout = null;
   let isDarkTheme = false;
-  let isTranscriptionVisible = true;
+  let isTranscriptionVisible = false; // Hidden by default in the new UI
   let accessibilitySettings = {
     fontSize: 'medium',
     autoScroll: true
   };
 
-  // Initialize UI
-  initializeUI();
+  // ===== Event Listeners =====
+  // Handle chat input
+  if (chatInput) {
+    // Handle Enter key to send message (Shift+Enter for new line)
+    chatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendChatMessage();
+      }
+    });
 
-  // Initialize automated answering
-  initializeAutomatedAnswering();
+    // Auto-resize the input as user types
+    chatInput.addEventListener('input', () => {
+      // Auto-resize the contenteditable div
+      chatInput.style.height = 'auto';
+      chatInput.style.height = `${Math.min(chatInput.scrollHeight, 200)}px`;
 
-  // Event Listeners - Main Controls
-  toggleListeningButton.addEventListener('click', toggleListening);
+      // Enable/disable send button based on content
+      updateSendButtonState();
+    });
 
-  // Event Listeners - Chat
-  sendButton.addEventListener('click', sendChatMessage);
-  chatInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      sendChatMessage();
-    }
-  });
-  clearChatButton.addEventListener('click', clearChat);
+    // Handle paste events to clean up formatting
+    chatInput.addEventListener('paste', (e) => {
+      e.preventDefault();
+      const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+      document.execCommand('insertText', false, text);
+    });
+  }
 
-  // Event Listeners - Controls
-  settingsButton.addEventListener('click', openOptionsPage);
-  toggleThemeButton.addEventListener('click', toggleTheme);
-  toggleTranscriptionButton.addEventListener('click', toggleTranscriptionVisibility);
-  copyToClipboardButton.addEventListener('click', copyToClipboard);
+  // Send button click handler
+  if (sendMessageButton) {
+    sendMessageButton.addEventListener('click', sendChatMessage);
+  }
 
-  // Event Listeners - Visual Analysis
-  captureScreenButton.addEventListener('click', captureScreen);
-  copyAnalysisButton.addEventListener('click', copyAnalysis);
-  refreshAnalysisButton.addEventListener('click', refreshAnalysis);
+  // Update send button state based on input
+  function updateSendButtonState() {
+    if (!sendMessageButton) return;
+    const hasContent = chatInput.textContent.trim().length > 0;
+    sendMessageButton.disabled = !hasContent;
+    sendMessageButton.style.opacity = hasContent ? '1' : '0.5';
+    sendMessageButton.style.cursor = hasContent ? 'pointer' : 'not-allowed';
+  }
 
-  // Event Listeners - Automated Answering
-  speakButton.addEventListener('click', speakAnswer);
-  copyButton.addEventListener('click', copyAnswer);
-  refreshButton.addEventListener('click', refreshAnswer);
-  autoAnswerButton.addEventListener('click', toggleAutoAnswerSettings);
-  closeAutoAnswerSettings.addEventListener('click', toggleAutoAnswerSettings);
-  autoAnswerToggle.addEventListener('change', toggleAutoAnswer);
-  audioInjectionToggle.addEventListener('change', toggleAudioInjection);
+  // Attach file button
+  if (attachFileButton) {
+    attachFileButton.addEventListener('click', () => {
+      // TODO: Implement file attachment functionality
+      showStatusMessage('File attachment feature coming soon!', 'info');
+    });
+  }
 
-  // Voice settings event listeners
-  voiceSelect.addEventListener('change', changeVoice);
-  rateRange.addEventListener('input', updateRateValue);
-  pitchRange.addEventListener('input', updatePitchValue);
-  volumeRange.addEventListener('input', updateVolumeValue);
+  // Emoji picker button
+  if (emojiButton) {
+    emojiButton.addEventListener('click', () => {
+      // TODO: Implement emoji picker
+      showStatusMessage('Emoji picker coming soon!', 'info');
+    });
+  }
 
-  // Event Listeners - Footer
-  helpLink.addEventListener('click', openHelpPage);
-  feedbackLink.addEventListener('click', openFeedbackForm);
+  // Toggle listening state
+  if (toggleListeningButton) {
+    toggleListeningButton.addEventListener('click', () => {
+      // Toggle listening state
+      isListening = !isListening;
 
-  /**
-   * Initializes the UI based on stored state
-   */
-  function initializeUI() {
-    // Get stored state
-    chrome.storage.local.get([
-      'isListening',
-      'accessibilitySettings',
-      'theme',
-      'transcriptionVisible'
-    ], (result) => {
-      // Update listening state
-      isListening = result.isListening || false;
+      // Update UI
+      toggleListeningButton.classList.toggle('active', isListening);
       updateListeningUI();
 
-      // Update accessibility settings
-      if (result.accessibilitySettings) {
-        accessibilitySettings = result.accessibilitySettings;
-        applyAccessibilitySettings();
-      }
-
-      // Apply theme preference
-      if (result.theme === 'dark') {
-        isDarkTheme = true;
-        document.body.classList.add('dark-theme');
-        toggleThemeButton.title = 'Switch to Light Theme';
-      }
-
-      // Apply transcription visibility preference
-      if (result.transcriptionVisible === false) {
-        isTranscriptionVisible = false;
-        const transcriptionContainer = document.querySelector('.transcription-container');
-        transcriptionContainer.style.display = 'none';
-        toggleTranscriptionButton.title = 'Show Transcription';
-      }
-
-      // Get current status from service worker
-      chrome.runtime.sendMessage({ action: 'getStatus' }, (response) => {
-        if (response) {
-          // Update platform
-          if (response.currentPlatform) {
-            updatePlatformUI(response.currentPlatform);
-          }
-
-          // Update transcription
-          if (response.lastTranscribedText) {
-            // Replace the placeholder text with actual content
-            if (transcribedQuestion.querySelector('.placeholder-text')) {
-              transcribedQuestion.innerHTML = '';
-            }
-            transcribedQuestion.textContent = response.lastTranscribedText;
-          }
-
-          // Update suggestions
-          if (response.lastGeneratedAnswer) {
-            // Replace the placeholder text with actual content
-            if (aiSuggestions.querySelector('.placeholder-text')) {
-              aiSuggestions.innerHTML = '';
-            }
-            aiSuggestions.textContent = response.lastGeneratedAnswer;
-          }
+      // Send message to background script
+      chrome.runtime.sendMessage({
+        action: isListening ? 'startListening' : 'stopListening'
+      }, (response) => {
+        // Handle response from background script
+        if (chrome.runtime.lastError) {
+          console.error('Error toggling listening state:', chrome.runtime.lastError);
+          // Revert state if there was an error
+          isListening = !isListening;
+          toggleListeningButton.classList.toggle('active', isListening);
+          updateListeningUI();
+          showStatusMessage('Error toggling microphone: ' + chrome.runtime.lastError.message, 'error');
+        } else if (response && response.error) {
+          console.error('Error from background script:', response.error);
+          // Revert state if there was an error
+          isListening = !isListening;
+          toggleListeningButton.classList.toggle('active', isListening);
+          updateListeningUI();
+          showStatusMessage('Error: ' + response.error, 'error');
+        } else {
+          console.log('Successfully toggled listening state:', isListening);
         }
       });
     });
   }
 
-  /**
-   * Applies accessibility settings to the UI
-   */
-  function applyAccessibilitySettings() {
-    // Apply font size
-    document.body.classList.remove('font-size-small', 'font-size-medium', 'font-size-large');
-    document.body.classList.add(`font-size-${accessibilitySettings.fontSize}`);
-
-    // Apply auto-scroll setting (will be used when adding messages)
-  }
-
-  /**
-   * Toggles the listening state
-   */
-  function toggleListening() {
-    // Update UI immediately for responsiveness
-    isListening = !isListening;
-    updateListeningUI();
-
-    // Send message to service worker
-    chrome.runtime.sendMessage({
-      action: isListening ? 'startListening' : 'stopListening'
-    }, (response) => {
-      // If the operation failed, revert UI
-      if (response && !response.success) {
-        isListening = !isListening;
-        updateListeningUI();
-
-        // Show error message
-        showStatusMessage('Error ' + (isListening ? 'starting' : 'stopping') + ' listening', 'error');
-      }
+  // Visual Analysis button
+  if (visualAnalysisButton) {
+    visualAnalysisButton.addEventListener('click', () => {
+      openVisualAnalysisPage();
     });
   }
 
-  /**
-   * Updates the UI based on listening state
-   */
-  function updateListeningUI() {
-    if (isListening) {
-      toggleListeningButton.querySelector('.button-text').textContent = i18n.getMessage('stopListening');
-      toggleListeningButton.classList.add('active');
-      statusText.textContent = i18n.getMessage('listening');
-      statusText.classList.add('listening');
-    } else {
-      toggleListeningButton.querySelector('.button-text').textContent = i18n.getMessage('startListening');
-      toggleListeningButton.classList.remove('active');
-      statusText.textContent = i18n.getMessage('notListening');
-      statusText.classList.remove('listening');
-    }
+  // Settings button
+  if (settingsButton) {
+    settingsButton.addEventListener('click', () => {
+      // Open the options page in a new tab
+      const optionsUrl = chrome.runtime.getURL('options/options.html');
+
+      // Add visual feedback
+      settingsButton.classList.add('active');
+
+      // Try to open the options page using chrome.tabs.create
+      chrome.tabs.create({ url: optionsUrl }, (tab) => {
+        if (chrome.runtime.lastError) {
+          console.error('Error opening options page:', chrome.runtime.lastError);
+          // Fallback to window.open
+          window.open(optionsUrl, '_blank');
+          showStatusMessage('Settings opened in new window', 'success');
+        } else {
+          console.log('Options page opened in tab:', tab);
+          showStatusMessage('Settings opened in new tab', 'success');
+        }
+
+        // Remove active class after a short delay
+        setTimeout(() => {
+          settingsButton.classList.remove('active');
+        }, 300);
+      });
+    });
   }
 
-  /**
-   * Updates the platform indicator in the UI
-   */
-  function updatePlatformUI(platform) {
-    currentPlatform = platform;
-
-    if (platform) {
-      platformIndicator.textContent = platform;
-      platformIndicator.style.display = 'inline';
-    } else {
-      platformIndicator.style.display = 'none';
-    }
+  // Theme toggle button
+  if (toggleThemeButton) {
+    toggleThemeButton.addEventListener('click', () => {
+      toggleTheme();
+    });
   }
 
-  /**
-   * Sends a chat message to the service worker
-   */
-  function sendChatMessage() {
-    const message = chatInput.value.trim();
+  // Send chat message
+  async function sendChatMessage() {
+    const message = chatInput.textContent.trim();
     if (!message) return;
 
     // Add user message to chat
-    addChatMessage(message, 'user');
+    addChatMessage('user', message);
 
-    // Clear input
-    chatInput.value = '';
+    // Clear input and reset height
+    chatInput.textContent = '';
+    chatInput.style.height = 'auto';
+    updateSendButtonState();
 
-    // Show loading indicator
-    const loadingMessage = document.createElement('div');
-    loadingMessage.classList.add('message', 'ai-message', 'loading');
-    loadingMessage.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
-    chatMessages.appendChild(loadingMessage);
+    // Save chat history
+    saveChatHistory();
+
+    // Show typing indicator
+    const typingIndicator = showTypingIndicator();
+
+    try {
+      // Send message to background script for processing
+      const response = await new Promise((resolve) => {
+        chrome.runtime.sendMessage(
+          {
+            action: 'processUserMessage',
+            message,
+            // Include any context that might be helpful
+            context: {
+              url: window.location.href,
+              title: document.title
+            }
+          },
+          (response) => {
+            if (chrome.runtime.lastError) {
+              console.error('Error sending message:', chrome.runtime.lastError);
+              resolve({ error: 'Failed to process message' });
+            } else {
+              resolve(response);
+            }
+          }
+        );
+      });
+
+      // Remove typing indicator
+      if (typingIndicator && typingIndicator.parentNode) {
+        typingIndicator.remove();
+      }
+
+      // Add AI response to chat
+      if (response && !response.error) {
+        addChatMessage('ai', response.text, response.metadata);
+        // Save chat history after AI responds
+        saveChatHistory();
+      } else {
+        const errorMsg = response?.error || 'Sorry, I encountered an error processing your request.';
+        addChatMessage('ai', errorMsg);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      if (typingIndicator && typingIndicator.parentNode) {
+        typingIndicator.remove();
+      }
+      addChatMessage('ai', 'Sorry, something went wrong. Please try again.');
+    }
+
+    // Re-focus the input after sending
+    if (chatInput) {
+      chatInput.focus();
+    }
+  }
+
+  // Add a message to the chat
+  function addChatMessage(sender, message, metadata = {}) {
+    if (!chatMessages) return null;
+
+    const messageElement = document.createElement('div');
+    messageElement.className = `message ${sender}-message`;
+    messageElement.setAttribute('role', 'log');
+    messageElement.setAttribute('aria-live', 'polite');
+
+    // Add avatar
+    const avatar = document.createElement('div');
+    avatar.className = 'message-avatar';
+    avatar.innerHTML = sender === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-robot"></i>';
+    messageElement.appendChild(avatar);
+
+    // Create message content container
+    const content = document.createElement('div');
+    content.className = 'message-content';
+
+    // Add context if available
+    if (metadata.context) {
+      const context = document.createElement('div');
+      context.className = 'message-context';
+      context.textContent = metadata.context;
+      content.appendChild(context);
+    }
+
+    // Add message text with markdown support
+    const text = document.createElement('div');
+    text.className = 'message-text';
+    text.innerHTML = formatMarkdown(message);
+    content.appendChild(text);
+
+    // Add timestamp
+    const time = document.createElement('div');
+    time.className = 'message-time';
+    time.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    content.appendChild(time);
+
+    // Add action buttons
+    const actions = document.createElement('div');
+    actions.className = 'message-actions';
+
+    // Copy button
+    const copyButton = document.createElement('button');
+    copyButton.className = 'action-button';
+    copyButton.setAttribute('title', 'Copy to clipboard');
+    copyButton.innerHTML = '<i class="far fa-copy"></i>';
+    copyButton.addEventListener('click', () => copyToClipboard(message));
+    actions.appendChild(copyButton);
+
+    // Speak button (for AI messages)
+    if (sender === 'ai') {
+      const speakButton = document.createElement('button');
+      speakButton.className = 'action-button';
+      speakButton.setAttribute('title', 'Read aloud');
+      speakButton.innerHTML = '<i class="fas fa-volume-up"></i>';
+      speakButton.addEventListener('click', () => speakMessage(message));
+      actions.appendChild(speakButton);
+    }
+
+    content.appendChild(actions);
+    messageElement.appendChild(content);
+
+    // Add to chat with animation
+    messageElement.style.opacity = '0';
+    chatMessages.appendChild(messageElement);
+
+    // Trigger reflow for animation
+    void messageElement.offsetWidth;
+    messageElement.style.opacity = '1';
+    messageElement.style.transform = 'translateY(0)';
 
     // Scroll to bottom
     chatMessages.scrollTop = chatMessages.scrollHeight;
 
-    // Get conversation history
-    const conversationHistory = getConversationHistory();
-
-    // Send message to service worker for processing
-    chrome.runtime.sendMessage({
-      action: 'processUserMessage',
-      message: message,
-      conversationHistory: conversationHistory
-    }, (response) => {
-      // Remove loading indicator
-      if (loadingMessage && loadingMessage.parentNode) {
-        loadingMessage.parentNode.removeChild(loadingMessage);
-      }
-
-      if (response && response.answer) {
-        // Pass metadata to addChatMessage if available
-        addChatMessage(
-          response.answer,
-          'ai',
-          response.metadata || null
-        );
-
-        // Add to conversation history
-        addToConversationHistory(message, response.answer, response.metadata);
-      }
-    });
+    return messageElement;
   }
 
-  /**
-   * Gets the conversation history from local storage
-   * @returns {Array} - The conversation history
-   */
-  function getConversationHistory() {
-    const history = localStorage.getItem('chatHistory');
-    return history ? JSON.parse(history) : [];
+  // Show typing indicator
+  function showTypingIndicator() {
+    if (!chatMessages) return null;
+
+    const typingIndicator = document.createElement('div');
+    typingIndicator.className = 'message ai-message typing-indicator';
+    typingIndicator.innerHTML = `
+      <div class="message-avatar ai-avatar">
+        <i class="fas fa-robot"></i>
+      </div>
+      <div class="message-content">
+        <div class="message-text">
+          <div class="loading-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+      </div>
+    `;
+
+    chatMessages.appendChild(typingIndicator);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    return typingIndicator;
   }
 
-  /**
-   * Adds a message exchange to the conversation history
-   * @param {string} userMessage - The user's message
-   * @param {string} aiResponse - The AI's response
-   * @param {Object} metadata - Optional metadata
-   */
-  function addToConversationHistory(userMessage, aiResponse, metadata = null) {
-    const history = getConversationHistory();
+  // Format markdown in messages
+  function formatMarkdown(text) {
+    if (!text) return '';
 
-    // Add the new exchange
-    history.push({
-      user: userMessage,
-      ai: aiResponse,
-      timestamp: new Date().toISOString(),
-      metadata: metadata
-    });
-
-    // Limit history to last 10 exchanges
-    if (history.length > 10) {
-      history.shift();
-    }
-
-    // Save to local storage
-    localStorage.setItem('chatHistory', JSON.stringify(history));
+    // Simple markdown parsing
+    return text
+      // Bold and italic
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      // Code blocks
+      .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      // Links
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+      // Line breaks
+      .replace(/\n/g, '<br>');
   }
 
-  /**
-   * Adds a message to the chat UI
-   * @param {string} text - The message text
-   * @param {string} sender - The sender ('user' or 'ai')
-   * @param {Object} metadata - Optional metadata for AI messages
-   */
-  function addChatMessage(text, sender, metadata = null) {
-    const messageElement = document.createElement('div');
-    messageElement.classList.add('message');
-    messageElement.classList.add(sender === 'user' ? 'user-message' : 'ai-message');
+  // Show status message
+  function showStatusMessage(message, duration = 3000) {
+    let statusEl = document.getElementById('statusMessage');
 
-    // For AI messages, check if resume or job description context was used
-    if (sender === 'ai' && metadata) {
-      if (metadata.usedResumeContext) {
-        messageElement.classList.add('with-resume-context');
-      }
-
-      if (metadata.usedJobDescriptionContext) {
-        messageElement.classList.add('with-jd-context');
-      }
-
-      // Create message content with context indicators
-      const messageContent = document.createElement('div');
-
-      // Add context indicators if applicable
-      if (metadata.usedResumeContext || metadata.usedJobDescriptionContext) {
-        const contextIndicators = document.createElement('div');
-        contextIndicators.style.marginBottom = '8px';
-
-        if (metadata.usedResumeContext) {
-          const resumeIndicator = document.createElement('span');
-          resumeIndicator.className = 'context-indicator resume-context';
-          resumeIndicator.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg> Resume';
-          contextIndicators.appendChild(resumeIndicator);
-        }
-
-        if (metadata.usedJobDescriptionContext) {
-          const jdIndicator = document.createElement('span');
-          jdIndicator.className = 'context-indicator jd-context';
-          jdIndicator.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg> Job Description';
-          contextIndicators.appendChild(jdIndicator);
-        }
-
-        messageContent.appendChild(contextIndicators);
-      }
-
-      // Add the message text
-      const textElement = document.createElement('div');
-      textElement.textContent = text;
-      messageContent.appendChild(textElement);
-
-      messageElement.appendChild(messageContent);
-    } else {
-      // For user messages, just set the text content
-      messageElement.textContent = text;
+    if (!statusEl) {
+      statusEl = document.createElement('div');
+      statusEl.id = 'statusMessage';
+      statusEl.className = 'status-message';
+      document.body.appendChild(statusEl);
     }
 
-    chatMessages.appendChild(messageElement);
+    statusEl.textContent = message;
+    statusEl.classList.add('show');
 
-    // Scroll to bottom if auto-scroll is enabled
-    if (accessibilitySettings.autoScroll) {
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-  }
-
-  /**
-   * Updates the transcribed question in the UI
-   */
-  function updateTranscription(text, isFinal) {
-    // Clear any pending timeout for interim results
-    if (interimTranscriptTimeout) {
-      clearTimeout(interimTranscriptTimeout);
-      interimTranscriptTimeout = null;
-    }
-
-    // Update the UI
-    transcribedQuestion.textContent = text;
-
-    // If this is an interim result, set a timeout to clear it if no updates come
-    if (!isFinal) {
-      transcribedQuestion.classList.add('interim');
-
-      interimTranscriptTimeout = setTimeout(() => {
-        transcribedQuestion.classList.remove('interim');
-      }, 5000);
-    } else {
-      transcribedQuestion.classList.remove('interim');
-    }
-  }
-
-  /**
-   * Updates the AI suggestions in the UI
-   * @param {string} text - The suggestion text
-   * @param {boolean} isLoading - Whether the suggestion is loading
-   * @param {boolean} isError - Whether there was an error
-   * @param {Object} metadata - Additional metadata about the suggestion
-   */
-  function updateSuggestions(text, isLoading = false, isError = false, metadata = null) {
-    // Clear existing content
-    aiSuggestions.innerHTML = '';
-
-    // Remove any existing classes
-    aiSuggestions.classList.remove('highlight', 'loading', 'error');
-
-    if (isLoading) {
-      // Show loading state
-      aiSuggestions.classList.add('loading');
-
-      // Create loading spinner
-      const loadingSpinner = document.createElement('div');
-      loadingSpinner.className = 'loading-spinner';
-      aiSuggestions.appendChild(loadingSpinner);
-
-      // Add loading text
-      const loadingText = document.createElement('p');
-      loadingText.textContent = text || i18n.getMessage('generatingResponse');
-      aiSuggestions.appendChild(loadingText);
-    } else if (isError) {
-      // Show error state
-      aiSuggestions.classList.add('error');
-      aiSuggestions.textContent = text;
-    } else {
-      // Show normal suggestion
-      aiSuggestions.textContent = text;
-
-      // Add context indicators if applicable
-      if (metadata && (metadata.usedResumeContext || metadata.usedJobDescriptionContext)) {
-        const contextIndicators = document.createElement('div');
-        contextIndicators.style.marginBottom = '12px';
-
-        if (metadata.usedResumeContext) {
-          const resumeIndicator = document.createElement('span');
-          resumeIndicator.className = 'context-indicator resume-context';
-          resumeIndicator.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg> Using your resume';
-          contextIndicators.appendChild(resumeIndicator);
-        }
-
-        if (metadata.usedJobDescriptionContext) {
-          const jdIndicator = document.createElement('span');
-          jdIndicator.className = 'context-indicator jd-context';
-          jdIndicator.style.marginLeft = metadata.usedResumeContext ? '8px' : '0';
-          jdIndicator.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg> Using job description';
-          contextIndicators.appendChild(jdIndicator);
-        }
-
-        aiSuggestions.insertBefore(contextIndicators, aiSuggestions.firstChild);
-      }
-
-      // Add metadata if available
-      if (metadata) {
-        const metadataElement = document.createElement('div');
-        metadataElement.className = 'suggestion-metadata';
-
-        // Show fallback notice if applicable
-        if (metadata.usedFallback && metadata.originalProvider) {
-          const fallbackNotice = document.createElement('div');
-          fallbackNotice.className = 'fallback-notice';
-          fallbackNotice.innerHTML = `<i class="fallback-icon">⚠️</i> Fallback from ${metadata.originalProvider} to ${metadata.provider}`;
-          aiSuggestions.appendChild(fallbackNotice);
-        }
-
-        if (metadata.provider) {
-          const providerBadge = document.createElement('span');
-          providerBadge.className = 'metadata-badge provider';
-          providerBadge.textContent = metadata.provider;
-          metadataElement.appendChild(providerBadge);
-        }
-
-        if (metadata.model) {
-          const modelBadge = document.createElement('span');
-          modelBadge.className = 'metadata-badge model';
-          modelBadge.textContent = metadata.model;
-          metadataElement.appendChild(modelBadge);
-        }
-
-        if (metadata.tokens) {
-          const tokensBadge = document.createElement('span');
-          tokensBadge.className = 'metadata-badge tokens';
-          tokensBadge.textContent = `${metadata.tokens} tokens`;
-          metadataElement.appendChild(tokensBadge);
-        }
-
-        if (metadata.questionType) {
-          const questionTypeBadge = document.createElement('span');
-          questionTypeBadge.className = 'metadata-badge question-type';
-          questionTypeBadge.textContent = metadata.questionType.toLowerCase().replace('_', '-');
-          metadataElement.appendChild(questionTypeBadge);
-        }
-
-        aiSuggestions.appendChild(metadataElement);
-      }
-
-      // Add a subtle animation to draw attention
-      aiSuggestions.classList.add('highlight');
-      setTimeout(() => {
-        aiSuggestions.classList.remove('highlight');
-      }, 1000);
-    }
-  }
-
-  /**
-   * Shows a status message in the UI
-   */
-  function showStatusMessage(message, type = 'info') {
-    const statusMessage = document.createElement('div');
-    statusMessage.classList.add('status-message', type);
-    statusMessage.textContent = message;
-
-    document.querySelector('.container').appendChild(statusMessage);
-
-    // Remove after 3 seconds
+    // Hide after duration
     setTimeout(() => {
-      statusMessage.classList.add('fade-out');
-      setTimeout(() => {
-        statusMessage.remove();
-      }, 500);
-    }, 3000);
+      statusEl.classList.remove('show');
+    }, duration);
+  }
+
+  // Copy text to clipboard
+  function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+      showStatusMessage('Copied to clipboard!');
+    }).catch(err => {
+      console.error('Failed to copy text:', err);
+      showStatusMessage('Failed to copy text');
+    });
+  }
+
+  // Speak message using speech synthesis
+  function speakMessage(text) {
+    const speakButton = document.getElementById('speakButton');
+
+    if (!speechSynthesis) {
+      showStatusMessage('Speech synthesis not supported', 'error');
+      if (speakButton) {
+        speakButton.classList.remove('active');
+      }
+      return;
+    }
+
+    // If speech is already in progress, stop it
+    if (speechSynthesis.speaking) {
+      speechSynthesis.cancel();
+      showStatusMessage('Speech stopped', 'info');
+      if (speakButton) {
+        speakButton.classList.remove('active');
+      }
+      return;
+    }
+
+    // Start new speech
+    const utterance = new SpeechSynthesisUtterance(text);
+
+    // Set voice if available
+    const voices = loadBasicVoices();
+    if (voices.length > 0) {
+      // Try to find a natural-sounding English voice
+      const preferredVoices = voices.filter(v => v.name.includes('Google') || v.name.includes('Samantha'));
+      utterance.voice = preferredVoices[0] || voices[0];
+    }
+
+    utterance.rate = 1;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+
+    // Add event listeners
+    utterance.onend = () => {
+      showStatusMessage('Finished reading', 'success');
+      if (speakButton) {
+        speakButton.classList.remove('active');
+      }
+    };
+
+    utterance.onerror = (event) => {
+      console.error('Speech synthesis error:', event);
+      showStatusMessage('Error reading message', 'error');
+      if (speakButton) {
+        speakButton.classList.remove('active');
+      }
+    };
+
+    // Start speaking
+    speechSynthesis.speak(utterance);
+    showStatusMessage('Reading text aloud...', 'info');
+
+    // Ensure the button shows active state
+    if (speakButton && !speakButton.classList.contains('active')) {
+      speakButton.classList.add('active');
+    }
+  }
+
+  // Update UI based on listening state
+  function updateListeningUI() {
+    if (!toggleListeningButton) return;
+
+    const icon = toggleListeningButton.querySelector('i');
+    if (isListening) {
+      icon.classList.remove('fa-microphone');
+      icon.classList.add('fa-microphone-slash');
+      toggleListeningButton.setAttribute('aria-label', 'Stop listening');
+
+      // Show a visual indicator that we're listening
+      showStatusMessage('Listening...', 2000);
+    } else {
+      icon.classList.remove('fa-microphone-slash');
+      icon.classList.add('fa-microphone');
+      toggleListeningButton.setAttribute('aria-label', 'Start listening');
+      showStatusMessage('Microphone off', 'info');
+    }
   }
 
   /**
-   * Opens the options page
+   * Opens the visual analysis page in a new tab
    */
-  function openOptionsPage() {
-    chrome.runtime.openOptionsPage();
+  function openVisualAnalysisPage() {
+    console.log('Visual analysis button clicked');
+
+    // Add visual feedback for the button immediately
+    visualAnalysisButton.classList.add('active');
+
+    // Create a dedicated visual analysis page URL
+    const visualAnalysisUrl = chrome.runtime.getURL('visual-analysis.html');
+
+    // Try to open the visual analysis page using chrome.tabs.create
+    chrome.tabs.create({ url: visualAnalysisUrl }, (tab) => {
+      if (chrome.runtime.lastError) {
+        console.error('Error opening visual analysis page:', chrome.runtime.lastError);
+
+        // Fallback to window.open
+        try {
+          window.open(visualAnalysisUrl, '_blank');
+          console.log('Opened visual analysis using window.open');
+          showStatusMessage('Visual analysis opened in new window', 'success');
+        } catch (windowError) {
+          console.error('Error using window.open:', windowError);
+          showStatusMessage('Failed to open visual analysis', 'error');
+
+          // If all else fails, try to request screen capture directly
+          requestVisualAnalysis();
+        }
+      } else {
+        console.log('Visual analysis page opened in tab:', tab);
+        showStatusMessage('Visual analysis opened in new tab', 'success');
+      }
+
+      // Remove active class after a short delay
+      setTimeout(() => {
+        visualAnalysisButton.classList.remove('active');
+      }, 300);
+    });
+  }
+
+  /**
+   * Requests visual analysis directly if opening a new page fails
+   */
+  async function requestVisualAnalysis() {
+    console.log('Attempting direct visual analysis');
+    showStatusMessage('Requesting screen capture permission...', 'info');
+
+    try {
+      const response = await chrome.runtime.sendMessage({
+        action: 'requestVisualAnalysisPermission'
+      });
+
+      if (!response || !response.success) {
+        showStatusMessage('Screen capture permission denied', 'error');
+        return;
+      }
+
+      showStatusMessage('Permission granted. Capturing screen...', 'info');
+
+      // Capture screen
+      const captureResponse = await chrome.runtime.sendMessage({
+        action: 'captureScreen'
+      });
+
+      if (!captureResponse || !captureResponse.success) {
+        showStatusMessage('Failed to capture screen', 'error');
+        return;
+      }
+
+      // If we have analysis, show it in a new window
+      if (captureResponse.analysis) {
+        const analysisWindow = window.open('', '_blank');
+        if (analysisWindow) {
+          analysisWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <title>Visual Analysis Result</title>
+              <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                img { max-width: 100%; border: 1px solid #ccc; margin-bottom: 20px; }
+                h1 { color: #333; }
+                pre { background: #f5f5f5; padding: 15px; border-radius: 5px; white-space: pre-wrap; }
+              </style>
+            </head>
+            <body>
+              <h1>Visual Analysis Result</h1>
+              <img src="${captureResponse.imageData}" alt="Captured Screen">
+              <h2>Analysis:</h2>
+              <pre>${captureResponse.analysis.text}</pre>
+            </body>
+            </html>
+          `);
+          analysisWindow.document.close();
+          showStatusMessage('Analysis complete', 'success');
+        } else {
+          showStatusMessage('Popup blocked. Please allow popups for this site.', 'warning');
+        }
+      } else {
+        showStatusMessage('Analysis failed', 'warning');
+      }
+    } catch (error) {
+      console.error('Error in direct visual analysis:', error);
+      showStatusMessage('Error: ' + error.message, 'error');
+    }
   }
 
   /**
@@ -542,16 +813,300 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (isDarkTheme) {
       document.body.classList.add('dark-theme');
       toggleThemeButton.title = 'Switch to Light Theme';
+      // Update icon
+      const icon = toggleThemeButton.querySelector('i');
+      if (icon) {
+        icon.classList.remove('fa-moon');
+        icon.classList.add('fa-sun');
+      }
       // Store preference
       chrome.storage.local.set({ 'theme': 'dark' });
     } else {
       document.body.classList.remove('dark-theme');
       toggleThemeButton.title = 'Switch to Dark Theme';
+      // Update icon
+      const icon = toggleThemeButton.querySelector('i');
+      if (icon) {
+        icon.classList.remove('fa-sun');
+        icon.classList.add('fa-moon');
+      }
       // Store preference
       chrome.storage.local.set({ 'theme': 'light' });
     }
 
+    // Add visual feedback
+    toggleThemeButton.classList.add('active');
+    setTimeout(() => {
+      toggleThemeButton.classList.remove('active');
+    }, 300);
+
     showStatusMessage(`Switched to ${isDarkTheme ? 'dark' : 'light'} theme`, 'info');
+  }
+
+  /**
+   * Loads saved accessibility settings from storage
+   */
+  function loadAccessibilitySettings() {
+    chrome.storage.local.get(['accessibilitySettings'], (result) => {
+      if (result.accessibilitySettings) {
+        accessibilitySettings = result.accessibilitySettings;
+      } else {
+        // Set default settings if none exist
+        accessibilitySettings = {
+          fontSize: 'medium',
+          autoScroll: true
+        };
+        saveAccessibilitySettings();
+      }
+
+      // Apply font size
+      applyFontSize();
+
+      // Update autoscroll button state
+      updateAutoscrollButtonState();
+    });
+  }
+
+  /**
+   * Updates the autoscroll button state based on current settings
+   */
+  function updateAutoscrollButtonState() {
+    const toggleAutoscrollButton = document.getElementById('toggleAutoscrollButton');
+    if (toggleAutoscrollButton) {
+      // Update visual state
+      toggleAutoscrollButton.classList.toggle('active', accessibilitySettings.autoScroll);
+
+      // Update tooltip
+      toggleAutoscrollButton.title = `Toggle Autoscroll (Currently ${accessibilitySettings.autoScroll ? 'On' : 'Off'})`;
+    }
+  }
+
+  /**
+   * Saves accessibility settings to storage
+   */
+  function saveAccessibilitySettings() {
+    chrome.storage.local.set({ 'accessibilitySettings': accessibilitySettings }, () => {
+      console.log('Accessibility settings saved:', accessibilitySettings);
+    });
+  }
+
+  /**
+   * Increases the font size of the suggestions box
+   */
+  function increaseFontSize() {
+    const fontSizes = ['small', 'medium', 'large', 'xlarge'];
+    const currentIndex = fontSizes.indexOf(accessibilitySettings.fontSize);
+
+    if (currentIndex < fontSizes.length - 1) {
+      accessibilitySettings.fontSize = fontSizes[currentIndex + 1];
+      applyFontSize();
+      saveAccessibilitySettings();
+      showStatusMessage(`Font size increased to ${accessibilitySettings.fontSize}`, 'info');
+    } else {
+      showStatusMessage('Maximum font size reached', 'info');
+    }
+  }
+
+  /**
+   * Decreases the font size of the suggestions box
+   */
+  function decreaseFontSize() {
+    const fontSizes = ['small', 'medium', 'large', 'xlarge'];
+    const currentIndex = fontSizes.indexOf(accessibilitySettings.fontSize);
+
+    if (currentIndex > 0) {
+      accessibilitySettings.fontSize = fontSizes[currentIndex - 1];
+      applyFontSize();
+      saveAccessibilitySettings();
+      showStatusMessage(`Font size decreased to ${accessibilitySettings.fontSize}`, 'info');
+    } else {
+      showStatusMessage('Minimum font size reached', 'info');
+    }
+  }
+
+  /**
+   * Applies the current font size to the suggestions box
+   */
+  function applyFontSize() {
+    const suggestionsBox = document.getElementById('aiSuggestions');
+    if (suggestionsBox) {
+      // Remove all font size classes
+      suggestionsBox.classList.remove('font-size-small', 'font-size-medium', 'font-size-large', 'font-size-xlarge');
+
+      // Add the current font size class
+      suggestionsBox.classList.add(`font-size-${accessibilitySettings.fontSize}`);
+    }
+  }
+
+  /**
+   * Toggles autoscroll for the suggestions box
+   */
+  function toggleAutoscroll() {
+    accessibilitySettings.autoScroll = !accessibilitySettings.autoScroll;
+    saveAccessibilitySettings();
+
+    // Update button state
+    updateAutoscrollButtonState();
+
+    // Show status message
+    showStatusMessage(`Autoscroll ${accessibilitySettings.autoScroll ? 'enabled' : 'disabled'}`, 'info');
+  }
+
+  /**
+   * Regenerates the answer based on the last question
+   */
+  function regenerateAnswer() {
+    // Get the last user message
+    const lastUserMessage = getLastUserMessage();
+
+    if (lastUserMessage) {
+      // Clear the AI suggestions box
+      const suggestionsBox = document.getElementById('aiSuggestions');
+      if (suggestionsBox) {
+        suggestionsBox.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
+      }
+
+      // Send message to background script for processing
+      chrome.runtime.sendMessage(
+        {
+          action: 'regenerateAnswer',
+          message: lastUserMessage,
+          context: {
+            url: window.location.href,
+            title: document.title
+          }
+        },
+        (response) => {
+          if (chrome.runtime.lastError) {
+            console.error('Error regenerating answer:', chrome.runtime.lastError);
+            showStatusMessage('Failed to regenerate answer', 'error');
+
+            // Clear loading indicator
+            if (suggestionsBox) {
+              suggestionsBox.innerHTML = '<div class="error-message">Failed to regenerate answer. Please try again.</div>';
+            }
+          } else if (response && response.text) {
+            // Update the suggestions box with the new answer
+            if (suggestionsBox) {
+              suggestionsBox.innerHTML = formatMarkdown(response.text);
+
+              // Handle scrolling based on autoscroll setting
+              handleAutoscroll(suggestionsBox, 'top');
+
+              if (accessibilitySettings.autoScroll) {
+                showStatusMessage('Answer regenerated - scrolled to top', 'success');
+              } else {
+                showStatusMessage('Answer regenerated - autoscroll disabled', 'success');
+              }
+            }
+
+            showStatusMessage('Answer regenerated', 'success');
+          } else {
+            // Handle error
+            if (suggestionsBox) {
+              suggestionsBox.innerHTML = '<div class="error-message">Failed to regenerate answer. Please try again.</div>';
+            }
+
+            showStatusMessage('Failed to regenerate answer', 'error');
+          }
+        }
+      );
+    } else {
+      showStatusMessage('No previous question found', 'info');
+    }
+  }
+
+  /**
+   * Gets the last user message from the chat
+   * @returns {string|null} The last user message or null if none found
+   */
+  function getLastUserMessage() {
+    const chatMessages = document.querySelectorAll('.user-message .message-text');
+    if (chatMessages.length > 0) {
+      return chatMessages[chatMessages.length - 1].textContent.trim();
+    }
+    return null;
+  }
+
+  /**
+   * Handles autoscroll for the suggestions box
+   * @param {HTMLElement} container - The container to scroll
+   * @param {string} position - The position to scroll to ('top', 'bottom', or 'none')
+   */
+  function handleAutoscroll(container, position = 'bottom') {
+    if (!container) return;
+
+    if (!accessibilitySettings.autoScroll) {
+      // If autoscroll is disabled, don't scroll
+      return;
+    }
+
+    if (position === 'top') {
+      container.scrollTop = 0;
+    } else if (position === 'bottom') {
+      container.scrollTop = container.scrollHeight;
+    }
+  }
+
+  /**
+   * Checks for microphone permission and updates the UI accordingly
+   */
+  async function checkMicrophonePermission() {
+    try {
+      // Check if we have microphone permission
+      const permissionStatus = await navigator.permissions.query({ name: 'microphone' });
+
+      if (permissionStatus.state === 'granted') {
+        console.log('Microphone permission already granted');
+        // Update UI to show that microphone is available
+        toggleListeningButton.disabled = false;
+        toggleListeningButton.title = 'Start Listening';
+      } else if (permissionStatus.state === 'prompt') {
+        console.log('Microphone permission will be requested when needed');
+        // Update UI to show that microphone permission will be requested
+        toggleListeningButton.disabled = false;
+        toggleListeningButton.title = 'Start Listening (permission will be requested)';
+      } else if (permissionStatus.state === 'denied') {
+        console.log('Microphone permission denied');
+        // Update UI to show that microphone is not available
+        toggleListeningButton.disabled = true;
+        toggleListeningButton.title = 'Microphone access denied. Please enable in browser settings.';
+        showStatusMessage('Microphone access denied. Please enable in browser settings.', 'warning');
+      }
+
+      // Listen for permission changes
+      permissionStatus.onchange = function() {
+        console.log('Microphone permission changed to:', this.state);
+        checkMicrophonePermission();
+      };
+    } catch (error) {
+      console.error('Error checking microphone permission:', error);
+      // Assume we can use the microphone if we can't check permissions
+      toggleListeningButton.disabled = false;
+    }
+  }
+
+  /**
+   * Loads the saved theme preference from storage
+   */
+  function loadThemePreference() {
+    chrome.storage.local.get(['theme'], (result) => {
+      if (result.theme === 'dark') {
+        isDarkTheme = true;
+        document.body.classList.add('dark-theme');
+        toggleThemeButton.title = 'Switch to Light Theme';
+        // Update icon
+        const icon = toggleThemeButton.querySelector('i');
+        if (icon) {
+          icon.classList.remove('fa-moon');
+          icon.classList.add('fa-sun');
+        }
+      } else {
+        isDarkTheme = false;
+        document.body.classList.remove('dark-theme');
+        toggleThemeButton.title = 'Switch to Dark Theme';
+      }
+    });
   }
 
   /**
@@ -614,27 +1169,51 @@ document.addEventListener('DOMContentLoaded', async () => {
   /**
    * Opens the help page
    */
-  function openHelpPage() {
-    chrome.tabs.create({ url: 'https://candidai.io/help' });
+  function openHelpPage(e) {
+    e.preventDefault();
+    try {
+      chrome.tabs.create({ url: 'https://candidai.io/help' });
+      console.log('Opening help page');
+    } catch (error) {
+      console.error('Error opening help page:', error);
+      // Fallback - open in current tab if chrome.tabs is not available
+      window.open('https://candidai.io/help', '_blank');
+    }
   }
 
   /**
    * Opens the feedback form
    */
-  function openFeedbackForm() {
-    chrome.tabs.create({ url: 'https://candidai.io/feedback' });
+  function openFeedbackForm(e) {
+    e.preventDefault();
+    try {
+      chrome.tabs.create({ url: 'https://candidai.io/feedback' });
+      console.log('Opening feedback form');
+    } catch (error) {
+      console.error('Error opening feedback form:', error);
+      // Fallback - open in current tab if chrome.tabs is not available
+      window.open('https://candidai.io/feedback', '_blank');
+    }
   }
 
   /**
    * Captures the screen for visual analysis
    */
   async function captureScreen() {
+    console.log('Capture screen button clicked');
+
     try {
       // Show loading state
       const capturedImagePlaceholder = document.getElementById('capturedImagePlaceholder');
       const capturedImage = document.getElementById('capturedImage');
       const analysisResult = document.getElementById('analysisResult');
       const analysisResultPlaceholder = document.getElementById('analysisResultPlaceholder');
+
+      if (!capturedImagePlaceholder || !capturedImage || !analysisResult || !analysisResultPlaceholder) {
+        console.error('Missing DOM elements for screen capture');
+        showStatusMessage('Error: UI elements not found', 'error');
+        return;
+      }
 
       capturedImagePlaceholder.textContent = 'Capturing screen...';
       capturedImagePlaceholder.style.display = 'block';
@@ -643,44 +1222,71 @@ document.addEventListener('DOMContentLoaded', async () => {
       analysisResultPlaceholder.textContent = 'Analyzing...';
       analysisResultPlaceholder.style.display = 'block';
 
-      // Request permission if needed
-      const response = await chrome.runtime.sendMessage({
-        action: 'requestVisualAnalysisPermission'
-      });
+      // Show status message to user
+      showStatusMessage('Requesting screen capture permission...', 'info');
 
-      if (!response || !response.success) {
-        capturedImagePlaceholder.textContent = 'Permission denied. Please grant screen capture permission.';
+      // Request permission if needed
+      try {
+        const response = await chrome.runtime.sendMessage({
+          action: 'requestVisualAnalysisPermission'
+        });
+
+        if (!response || !response.success) {
+          capturedImagePlaceholder.textContent = 'Permission denied. Please grant screen capture permission.';
+          analysisResultPlaceholder.textContent = 'No analysis available.';
+          showStatusMessage('Screen capture permission denied', 'error');
+          return;
+        }
+      } catch (error) {
+        console.error('Error requesting permission:', error);
+        capturedImagePlaceholder.textContent = 'Error requesting permission: ' + error.message;
         analysisResultPlaceholder.textContent = 'No analysis available.';
+        showStatusMessage('Error requesting permission', 'error');
         return;
       }
+
+      // Show status message to user
+      showStatusMessage('Capturing screen...', 'info');
 
       // Capture screen
-      const captureResponse = await chrome.runtime.sendMessage({
-        action: 'captureScreen'
-      });
+      try {
+        const captureResponse = await chrome.runtime.sendMessage({
+          action: 'captureScreen'
+        });
 
-      if (!captureResponse || !captureResponse.success) {
-        capturedImagePlaceholder.textContent = 'Failed to capture screen.';
+        if (!captureResponse || !captureResponse.success) {
+          capturedImagePlaceholder.textContent = 'Failed to capture screen.';
+          analysisResultPlaceholder.textContent = 'No analysis available.';
+          showStatusMessage('Failed to capture screen', 'error');
+          return;
+        }
+
+        // Display captured image
+        capturedImage.src = captureResponse.imageData;
+        capturedImage.style.display = 'block';
+        capturedImagePlaceholder.style.display = 'none';
+
+        showStatusMessage('Screen captured successfully', 'success');
+
+        // Wait for analysis
+        if (captureResponse.analysis) {
+          // Display analysis
+          analysisResult.textContent = captureResponse.analysis.text;
+          analysisResult.style.display = 'block';
+          analysisResultPlaceholder.style.display = 'none';
+          showStatusMessage('Analysis complete', 'success');
+        } else {
+          analysisResultPlaceholder.textContent = 'Analysis failed. Please try again.';
+          showStatusMessage('Analysis failed', 'warning');
+        }
+      } catch (error) {
+        console.error('Error during screen capture:', error);
+        capturedImagePlaceholder.textContent = 'Error capturing screen: ' + error.message;
         analysisResultPlaceholder.textContent = 'No analysis available.';
-        return;
-      }
-
-      // Display captured image
-      capturedImage.src = captureResponse.imageData;
-      capturedImage.style.display = 'block';
-      capturedImagePlaceholder.style.display = 'none';
-
-      // Wait for analysis
-      if (captureResponse.analysis) {
-        // Display analysis
-        analysisResult.textContent = captureResponse.analysis.text;
-        analysisResult.style.display = 'block';
-        analysisResultPlaceholder.style.display = 'none';
-      } else {
-        analysisResultPlaceholder.textContent = 'Analysis failed. Please try again.';
+        showStatusMessage('Error capturing screen', 'error');
       }
     } catch (error) {
-      console.error('Error capturing screen:', error);
+      console.error('Error in captureScreen function:', error);
       showStatusMessage('Error capturing screen: ' + error.message, 'error');
     }
   }
@@ -797,7 +1403,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       await automatedAnsweringService.initialize();
 
       // Load available voices
-      loadVoices();
+      loadBasicVoices();
 
       // Load settings
       loadAutomatedAnsweringSettings();
@@ -838,9 +1444,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   /**
-   * Load available voices for TTS
+   * Load available voices for TTS from service
    */
-  async function loadVoices() {
+  async function loadVoicesFromService() {
     try {
       const { default: automatedAnsweringService } = await import('../js/services/automatedAnswering.js');
 
