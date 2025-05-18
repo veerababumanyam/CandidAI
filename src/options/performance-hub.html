@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CandidAI - Performance Hub</title>
+  <link rel="stylesheet" href="options.css">
+  <link rel="stylesheet" href="performance-hub.css">
+</head>
+<body>
+  <div class="container">
+    <header class="app-header">
+      <div class="logo-container">
+        <img src="../assets/images/logo.png" alt="CandidAI Logo" class="logo">
+        <h1>CandidAI Performance Hub</h1>
+      </div>
+      <div class="header-controls">
+        <button id="backToOptions" class="secondary-button">
+          <span class="button-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+          </span>
+          <span class="button-text">Back to Options</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <section class="consent-section" id="consentSection">
+        <div class="section-header">
+          <h2>Interview History Consent</h2>
+        </div>
+        <div class="section-content">
+          <p class="consent-description">
+            To provide performance analytics and improvement suggestions, CandidAI needs to store your interview history.
+            This data is stored locally on your device and is never sent to our servers or shared with third parties.
+          </p>
+          <div class="consent-controls">
+            <label class="toggle-label">
+              <span>Enable Interview History Storage</span>
+              <div class="toggle-switch">
+                <input type="checkbox" id="historyConsentToggle">
+                <span class="toggle-slider"></span>
+              </div>
+            </label>
+          </div>
+          <p class="consent-note">
+            You can revoke consent at any time, which will delete all stored interview history.
+          </p>
+        </div>
+      </section>
+
+      <section class="history-section" id="historySection">
+        <div class="section-header">
+          <h2>Interview History</h2>
+          <div class="section-controls">
+            <button id="clearHistoryButton" class="danger-button">Clear History</button>
+          </div>
+        </div>
+        <div class="section-content">
+          <div class="history-stats">
+            <div class="stat-card">
+              <div class="stat-value" id="totalInterviewsValue">0</div>
+              <div class="stat-label">Total Interviews</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="totalQuestionsValue">0</div>
+              <div class="stat-label">Total Questions</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="averageScoreValue">0</div>
+              <div class="stat-label">Average Score</div>
+            </div>
+          </div>
+          <div class="history-list-container">
+            <div class="history-list-header">
+              <div class="history-list-column">Date</div>
+              <div class="history-list-column">Company</div>
+              <div class="history-list-column">Position</div>
+              <div class="history-list-column">Questions</div>
+              <div class="history-list-column">Score</div>
+              <div class="history-list-column">Actions</div>
+            </div>
+            <div class="history-list" id="interviewHistoryList">
+              <!-- Interview history items will be added here dynamically -->
+              <div class="empty-state" id="emptyHistoryState">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                  <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+                <p>No interview history yet</p>
+                <p class="empty-state-subtext">Your completed interviews will appear here</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="report-section hidden" id="reportSection">
+        <div class="section-header">
+          <h2>Interview Performance Report</h2>
+          <div class="section-controls">
+            <button id="backToHistoryButton" class="secondary-button">
+              <span class="button-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="19" y1="12" x2="5" y2="12"></line>
+                  <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+              </span>
+              <span class="button-text">Back to History</span>
+            </button>
+            <button id="exportReportButton" class="primary-button">
+              <span class="button-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+              </span>
+              <span class="button-text">Export Report</span>
+            </button>
+          </div>
+        </div>
+        <div class="section-content">
+          <div class="report-header">
+            <div class="report-title" id="reportTitle">Interview with Company Name</div>
+            <div class="report-metadata">
+              <div class="report-metadata-item">
+                <span class="metadata-label">Date:</span>
+                <span class="metadata-value" id="reportDate">Jan 1, 2023</span>
+              </div>
+              <div class="report-metadata-item">
+                <span class="metadata-label">Position:</span>
+                <span class="metadata-value" id="reportPosition">Software Engineer</span>
+              </div>
+              <div class="report-metadata-item">
+                <span class="metadata-label">Duration:</span>
+                <span class="metadata-value" id="reportDuration">30m 15s</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="report-score-container">
+            <div class="report-score">
+              <div class="score-circle">
+                <svg viewBox="0 0 36 36" class="score-circle-svg">
+                  <path class="score-circle-bg"
+                    d="M18 2.0845
+                    a 15.9155 15.9155 0 0 1 0 31.831
+                    a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                  <path id="scoreCircleFill" class="score-circle-fill"
+                    d="M18 2.0845
+                    a 15.9155 15.9155 0 0 1 0 31.831
+                    a 15.9155 15.9155 0 0 1 0 -31.831"
+                    stroke-dasharray="0, 100"
+                  />
+                </svg>
+                <div class="score-value" id="reportScoreValue">85</div>
+              </div>
+              <div class="score-label">Overall Score</div>
+            </div>
+          </div>
+          
+          <div class="report-sections">
+            <div class="report-section-card">
+              <h3>Topics Covered</h3>
+              <div class="topics-container" id="reportTopics">
+                <!-- Topics will be added here dynamically -->
+              </div>
+            </div>
+            
+            <div class="report-section-card">
+              <h3>Strengths</h3>
+              <ul class="strengths-list" id="reportStrengths">
+                <!-- Strengths will be added here dynamically -->
+              </ul>
+            </div>
+            
+            <div class="report-section-card">
+              <h3>Areas for Improvement</h3>
+              <ul class="improvement-list" id="reportImprovements">
+                <!-- Areas for improvement will be added here dynamically -->
+              </ul>
+            </div>
+            
+            <div class="report-section-card">
+              <h3>Coaching Tips</h3>
+              <ul class="coaching-list" id="reportCoachingTips">
+                <!-- Coaching tips will be added here dynamically -->
+              </ul>
+            </div>
+          </div>
+          
+          <div class="questions-section">
+            <h3>Questions & Answers</h3>
+            <div class="questions-list" id="reportQuestions">
+              <!-- Questions will be added here dynamically -->
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <div class="footer-content">
+        <span class="version">CandidAI v1.0</span>
+        <a href="#" id="helpLink" class="footer-link">Help</a>
+        <a href="#" id="feedbackLink" class="footer-link">Feedback</a>
+      </div>
+    </footer>
+  </div>
+
+  <script src="performance-hub.js"></script>
+</body>
+</html>

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CandidAI Assistant</title>
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="sidepanel.css">
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <a href="#main-content" class="skip-to-content">Skip to content</a>
+  <div class="container">
+    <header class="app-header">
+      <div class="logo-container">
+        <img src="../icons/logo3.png" alt="CandidAI Logo" class="logo">
+        <h1>CandidAI</h1>
+      </div>
+      <div class="header-controls">
+        <button id="toggleThemeButton" class="icon-button" title="Toggle Theme">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+        </button>
+        <button id="settingsButton" class="icon-button" title="Settings">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <section class="audio-controls">
+      <div class="audio-controls-wrapper">
+        <button id="toggleListeningButton" class="primary-button">
+          <span class="button-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+              <line x1="12" y1="19" x2="12" y2="23"></line>
+              <line x1="8" y1="23" x2="16" y2="23"></line>
+            </svg>
+          </span>
+          <span class="button-text" data-i18n="startListening">Start Listening</span>
+        </button>
+        <div class="status-indicator">
+          <span id="statusText" data-i18n="notListening">Not listening</span>
+          <span id="platformIndicator" class="platform-badge"></span>
+        </div>
+      </div>
+    </section>
+
+    <div id="main-content" class="main-content">
+      <section class="transcription-container">
+        <div class="section-header">
+          <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span data-i18n="transcribedQuestion">Transcribed Question</span>
+          </h2>
+          <div class="section-controls">
+            <button id="toggleTranscriptionVisibility" class="control-button" title="Toggle Visibility">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div id="transcribedQuestion" class="transcription-box">
+          <div class="placeholder-text" data-i18n="noQuestionDetected">No question detected yet. Start listening to begin transcription.</div>
+        </div>
+      </section>
+
+      <section class="suggestions-container">
+        <div class="section-header">
+          <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+            <span data-i18n="aiSuggestions">AI Suggestions</span>
+          </h2>
+          <div class="section-controls">
+            <button id="copyToClipboard" class="control-button" title="Copy to Clipboard">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div id="aiSuggestions" class="suggestions-box">
+          <div class="placeholder-text" data-i18n="suggestionsPlaceholder">AI suggestions will appear here once a question is detected.</div>
+        </div>
+        <div class="suggestion-actions">
+          <button id="copyButton" class="action-button" title="Copy to Clipboard">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+              <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+            </svg>
+            <span data-i18n="copy">Copy</span>
+          </button>
+          <button id="speakButton" class="action-button" title="Speak Answer">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+            </svg>
+            <span data-i18n="speak">Speak</span>
+          </button>
+          <button id="autoAnswerButton" class="action-button" title="Auto-Answer Settings">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polygon points="10 8 16 12 10 16 10 8"></polygon>
+            </svg>
+            <span data-i18n="autoAnswer">Auto-Answer</span>
+          </button>
+          <button id="refreshButton" class="action-button" title="Regenerate Answer">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 4v6h-6"></path>
+              <path d="M1 20v-6h6"></path>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
+              <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path>
+            </svg>
+            <span data-i18n="refresh">Refresh</span>
+          </button>
+        </div>
+
+        <!-- Auto-Answer Settings Panel (hidden by default) -->
+        <div id="autoAnswerSettings" class="auto-answer-settings hidden">
+          <div class="settings-header">
+            <h3 data-i18n="autoAnswerSettings">Auto-Answer Settings</h3>
+            <button class="close-button" id="closeAutoAnswerSettings">×</button>
+          </div>
+          <div class="settings-content">
+            <div class="setting-group">
+              <label class="toggle-label">
+                <span data-i18n="enableAutoAnswer">Enable Auto-Answer</span>
+                <div class="toggle-switch">
+                  <input type="checkbox" id="autoAnswerToggle">
+                  <span class="toggle-slider"></span>
+                </div>
+              </label>
+              <p class="setting-description" data-i18n="autoAnswerDescription">Automatically speak the answer when detected</p>
+            </div>
+
+            <div class="setting-group">
+              <label for="voiceSelect" data-i18n="voice">Voice</label>
+              <select id="voiceSelect" class="select-input">
+                <option value="">Loading voices...</option>
+              </select>
+            </div>
+
+            <div class="setting-group">
+              <label for="rateRange" data-i18n="speechRate">Speech Rate</label>
+              <div class="range-container">
+                <input type="range" id="rateRange" min="0.5" max="2" step="0.1" value="1">
+                <span class="range-value" id="rateValue">1.0</span>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <label for="pitchRange" data-i18n="pitch">Pitch</label>
+              <div class="range-container">
+                <input type="range" id="pitchRange" min="0.5" max="1.5" step="0.1" value="1">
+                <span class="range-value" id="pitchValue">1.0</span>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <label for="volumeRange" data-i18n="volume">Volume</label>
+              <div class="range-container">
+                <input type="range" id="volumeRange" min="0" max="1" step="0.1" value="1">
+                <span class="range-value" id="volumeValue">1.0</span>
+              </div>
+            </div>
+
+            <div class="setting-group experimental-feature">
+              <label class="toggle-label">
+                <span data-i18n="experimentalAudioInjection">Experimental: Audio Injection</span>
+                <div class="toggle-switch">
+                  <input type="checkbox" id="audioInjectionToggle">
+                  <span class="toggle-slider"></span>
+                </div>
+              </label>
+              <p class="setting-description warning" data-i18n="audioInjectionWarning">Injects audio directly into microphone stream. Use with caution!</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Visual Analysis Section -->
+      <section class="visual-analysis-container">
+        <div class="section-header">
+          <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+              <polyline points="21 15 16 10 5 21"></polyline>
+            </svg>
+            <span data-i18n="visualAnalysis">Visual Analysis</span>
+          </h2>
+          <div class="section-controls">
+            <button id="captureScreenButton" class="control-button" title="Capture Screen">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div id="visualAnalysisContent" class="visual-analysis-content">
+          <div id="capturedImageContainer" class="captured-image-container">
+            <img id="capturedImage" class="captured-image" src="" alt="Captured screen" style="display: none;">
+            <div id="capturedImagePlaceholder" class="placeholder-text" data-i18n="noImageCaptured">No screen captured yet. Click 'Capture Screen' to analyze visual content.</div>
+          </div>
+          <div id="analysisResultContainer" class="analysis-result-container">
+            <h3 data-i18n="analysisResult">Analysis Result</h3>
+            <div id="analysisResult" class="analysis-result"></div>
+            <div id="analysisResultPlaceholder" class="placeholder-text" data-i18n="noAnalysisYet">No analysis performed yet.</div>
+          </div>
+        </div>
+        <div class="suggestion-actions">
+          <button id="copyAnalysisButton" class="action-button" title="Copy Analysis">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+              <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+            </svg>
+            <span data-i18n="copyAnalysis">Copy Analysis</span>
+          </button>
+          <button id="refreshAnalysisButton" class="action-button" title="Re-analyze">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 4v6h-6"></path>
+              <path d="M1 20v-6h6"></path>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"></path>
+              <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"></path>
+            </svg>
+            <span data-i18n="reanalyze">Re-analyze</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="chat-container">
+        <div class="section-header">
+          <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+            </svg>
+            Follow-up Chat
+          </h2>
+          <div class="section-controls">
+            <button id="clearChat" class="control-button" title="Clear Chat">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div id="chatMessages" class="chat-messages">
+          <!-- Chat messages will be added here dynamically -->
+          <div class="chat-welcome">
+            <p>Ask follow-up questions or request clarification about the AI suggestions.</p>
+          </div>
+        </div>
+        <div class="chat-input-container">
+          <input type="text" id="chatInput" placeholder="Ask a follow-up question...">
+          <button id="sendButton" class="send-button" title="Send Message">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <footer class="app-footer">
+      <div class="footer-content">
+        <span class="version">CandidAI v1.0</span>
+        <a href="#" id="helpLink" class="footer-link">Help</a>
+        <a href="#" id="feedbackLink" class="footer-link">Feedback</a>
+      </div>
+    </footer>
+  </div>
+
+  <script src="sidepanel.js"></script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+:root {
+  /* Font Family */
+  --font-family-main: 'Nunito', sans-serif;
+
+  /* Primary Colors */
+  --color-primary: #e8a396; /* Coral/Peach - logo match */
+  --color-primary-darker: #d18c7e; /* Slightly darker for hover/active states */
+  --color-primary-lighter: #f5d8d0; /* Lighter for subtle backgrounds or highlights */
+  --color-primary-rgb: 232, 163, 150;
+
+  /* Text Colors */
+  --color-text-dark: #6b4e48; /* Darker Brown - logo facial features */
+  --color-text-light: #ffffff;
+  --color-text-medium: #8a706b; /* A medium brown for secondary text */
+
+  /* Background Colors */
+  --color-background-soft-peach: #fdf0ed; /* Soft peach theme */
+  --color-background-light: #ffffff;
+  --color-background-medium: #f8f8f8;
+
+  /* Functional Colors */
+  --color-success: #4CAF50; /* Green for success messages/indicators */
+  --color-success-darker: #388E3C;
+  --color-success-rgb: 76, 175, 80;
+
+  --color-error: #F44336;   /* Red for error messages/indicators */
+  --color-error-darker: #D32F2F;
+  --color-error-rgb: 244, 67, 54;
+
+  --color-warning: #FFC107; /* Yellow for warnings */
+  --color-warning-darker: #FFA000;
+  --color-warning-rgb: 255, 193, 7;
+
+  --color-info: #2196F3;    /* Blue for informational messages */
+  --color-info-darker: #1976D2;
+  --color-info-rgb: 33, 150, 243;
+
+  /* Border & Accents */
+  --color-border: #e0c8c3; /* Muted tone from peaches/browns */
+  --color-border-rgb: 224, 200, 195;
+  --color-accent-interactive: var(--color-primary); /* Interactive elements use primary color */
+
+  /* UI Sizing & Radius (incorporating accessibility and logo style) */
+  --border-radius-main: 20px; /* Matches logo's circular shape, for buttons, form controls */
+  --padding-small: 8px;
+  --padding-medium: 16px;
+  --padding-large: 24px;
+  --font-weight-normal: 400;
+  --font-weight-bold: 700;
+
+  /* Shadows for depth */
+  --shadow-soft: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-medium: 0 4px 8px rgba(0, 0, 0, 0.15);
+}

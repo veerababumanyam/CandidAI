@@ -1,0 +1,58 @@
+{
+  "name": "candidai",
+  "version": "0.0.1",
+  "description": "AI-powered interview assistant for job seekers",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack --mode production",
+    "dev": "webpack --mode development --watch",
+    "lint": "eslint src/**/*.js",
+    "format": "prettier --write \"src/**/*.{js,html,css}\"",
+    "clean": "rm -rf dist",
+    "prebuild": "npm run clean",
+    "start": "npm run dev",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/veerababumanyam/CandidAI.git"
+  },
+  "keywords": [
+    "chrome-extension",
+    "interview",
+    "ai",
+    "job-search"
+  ],
+  "author": "Veers Babu Manyam",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/veerababumanyam/CandidAI/issues"
+  },
+  "homepage": "https://github.com/veerababumanyam/CandidAI#readme",
+  "devDependencies": {
+    "@babel/core": "^7.22.5",
+    "@babel/preset-env": "^7.22.5",
+    "babel-jest": "^29.5.0",
+    "babel-loader": "^9.1.2",
+    "copy-webpack-plugin": "^11.0.0",
+    "css-loader": "^6.8.1",
+    "eslint": "^8.42.0",
+    "eslint-config-prettier": "^8.8.0",
+    "html-webpack-plugin": "^5.5.3",
+    "jest": "^29.5.0",
+    "jest-environment-jsdom": "^29.5.0",
+    "mini-css-extract-plugin": "^2.7.6",
+    "prettier": "^2.8.8",
+    "webpack": "^5.86.0",
+    "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.5.10",
+    "@google/generative-ai": "^0.1.3",
+    "mammoth": "^1.6.0",
+    "openai": "^4.0.0",
+    "pdfjs-dist": "^3.8.162"
+  }
+}

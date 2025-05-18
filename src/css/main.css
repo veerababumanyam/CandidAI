@@ -1,0 +1,220 @@
+/* CandidAI - Main CSS */
+
+/* Import variables */
+@import url('variables.css');
+
+/* Import common component styles */
+@import url('common.css');
+
+/* Import Nunito font */
+@font-face {
+  font-family: 'Nunito';
+  src: url('../assets/fonts/Nunito-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Nunito';
+  src: url('../assets/fonts/Nunito-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+}
+
+/* Reset and base styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  font-family: var(--font-family-main);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--color-text-dark);
+  background-color: var(--color-background-soft-peach);
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: var(--font-weight-bold);
+  line-height: 1.2;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Common components */
+.success-message {
+  background-color: var(--color-success);
+  color: white;
+  padding: var(--padding-medium);
+  border-radius: var(--border-radius-main);
+  margin-top: var(--padding-medium);
+  text-align: center;
+}
+
+.error-message {
+  background-color: var(--color-error);
+  color: white;
+  padding: var(--padding-medium);
+  border-radius: var(--border-radius-main);
+  margin-top: var(--padding-medium);
+  text-align: center;
+}
+
+.info-message {
+  background-color: var(--color-info);
+  color: white;
+  padding: var(--padding-medium);
+  border-radius: var(--border-radius-main);
+  margin-top: var(--padding-medium);
+  text-align: center;
+}
+
+.warning-message {
+  background-color: var(--color-warning);
+  color: var(--color-text-dark);
+  padding: var(--padding-medium);
+  border-radius: var(--border-radius-main);
+  margin-top: var(--padding-medium);
+  text-align: center;
+}
+
+/* Accessibility - Font size variations */
+body.font-size-small {
+  font-size: 14px;
+}
+
+body.font-size-medium {
+  font-size: 16px;
+}
+
+body.font-size-large {
+  font-size: 18px;
+}
+
+/* Focus states for accessibility */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+a:focus-visible {
+  outline: 3px solid rgba(var(--color-primary-rgb), 0.5);
+  outline-offset: 2px;
+}
+
+/* Skip to content link for keyboard users */
+.skip-to-content {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.skip-to-content:focus {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: auto;
+  height: auto;
+  padding: var(--padding-medium);
+  background-color: var(--color-background-light);
+  color: var(--color-primary);
+  font-weight: var(--font-weight-bold);
+  z-index: 9999;
+  border-bottom-right-radius: var(--border-radius-main);
+  box-shadow: var(--shadow-medium);
+}
+
+/* High contrast mode adjustments */
+@media (forced-colors: active) {
+  .primary-button,
+  .secondary-button,
+  .icon-button {
+    border: 2px solid currentColor;
+  }
+
+  .card,
+  .settings-section {
+    border: 1px solid currentColor;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes slideIn {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Utility classes */
+.text-center {
+  text-align: center;
+}
+
+.mt-1 {
+  margin-top: var(--padding-small);
+}
+
+.mt-2 {
+  margin-top: var(--padding-medium);
+}
+
+.mt-3 {
+  margin-top: var(--padding-large);
+}
+
+.mb-1 {
+  margin-bottom: var(--padding-small);
+}
+
+.mb-2 {
+  margin-bottom: var(--padding-medium);
+}
+
+.mb-3 {
+  margin-bottom: var(--padding-large);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-background-medium);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary-lighter);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
+}

@@ -1,0 +1,64 @@
+{
+  "manifest_version": 3,
+  "name": "__MSG_appName__",
+  "version": "0.0.1",
+  "description": "__MSG_appDescription__",
+  "default_locale": "en",
+  "icons": {
+    "16": "icons/logo5.png",
+    "48": "icons/logo4.png",
+    "128": "icons/logo3.png"
+  },
+  "action": {
+    "default_title": "CandidAI",
+    "default_icon": {
+      "16": "icons/logo5.png",
+      "48": "icons/logo4.png",
+      "128": "icons/logo3.png"
+    }
+  },
+  "background": {
+    "service_worker": "background/service-worker.js",
+    "type": "module"
+  },
+  "side_panel": {
+    "default_path": "sidepanel/sidepanel.html"
+  },
+  "options_page": "options/options.html",
+  "permissions": [
+    "storage",
+    "sidePanel",
+    "notifications",
+    "scripting",
+    "activeTab",
+    "offscreen"
+  ],
+  "optional_permissions": [
+    "desktopCapture"
+  ],
+  "host_permissions": [
+    "https://meet.google.com/*",
+    "https://zoom.us/*",
+    "https://teams.microsoft.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://meet.google.com/*",
+        "https://zoom.us/*",
+        "https://teams.microsoft.com/*"
+      ],
+      "js": ["content/content.js"]
+    },
+    {
+      "matches": [
+        "https://www.linkedin.com/jobs/*",
+        "https://www.linkedin.com/talent/*",
+        "https://www.linkedin.com/recruiter/*",
+        "https://app.hirevue.com/interviews/*"
+      ],
+      "js": ["content/platform-integration.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

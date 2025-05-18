@@ -1,0 +1,246 @@
+{
+  "appName": {
+    "message": "CandidAI - Interview Assistant",
+    "description": "The name of the extension"
+  },
+  "appDescription": {
+    "message": "AI-powered interview assistant that helps you prepare for and excel in job interviews",
+    "description": "The description of the extension"
+  },
+  "startListening": {
+    "message": "Start Listening",
+    "description": "Button text to start listening"
+  },
+  "stopListening": {
+    "message": "Stop Listening",
+    "description": "Button text to stop listening"
+  },
+  "notListening": {
+    "message": "Not listening",
+    "description": "Status text when not listening"
+  },
+  "listening": {
+    "message": "Listening...",
+    "description": "Status text when listening"
+  },
+  "transcribedQuestion": {
+    "message": "Transcribed Question",
+    "description": "Header for transcribed question section"
+  },
+  "noQuestionDetected": {
+    "message": "No question detected yet. Start listening to begin transcription.",
+    "description": "Placeholder text when no question is detected"
+  },
+  "aiSuggestions": {
+    "message": "AI Suggestions",
+    "description": "Header for AI suggestions section"
+  },
+  "suggestionsPlaceholder": {
+    "message": "AI suggestions will appear here once a question is detected.",
+    "description": "Placeholder text for AI suggestions"
+  },
+  "followUpChat": {
+    "message": "Follow-up Chat",
+    "description": "Header for follow-up chat section"
+  },
+  "chatWelcome": {
+    "message": "Ask follow-up questions or request clarification about the AI suggestions.",
+    "description": "Welcome message in chat"
+  },
+  "chatInputPlaceholder": {
+    "message": "Ask a follow-up question...",
+    "description": "Placeholder text for chat input"
+  },
+  "copy": {
+    "message": "Copy",
+    "description": "Button text to copy"
+  },
+  "speak": {
+    "message": "Speak",
+    "description": "Button text to speak"
+  },
+  "autoAnswer": {
+    "message": "Auto-Answer",
+    "description": "Button text for auto-answer"
+  },
+  "refresh": {
+    "message": "Refresh",
+    "description": "Button text to refresh"
+  },
+  "autoAnswerSettings": {
+    "message": "Auto-Answer Settings",
+    "description": "Header for auto-answer settings"
+  },
+  "enableAutoAnswer": {
+    "message": "Enable Auto-Answer",
+    "description": "Label for auto-answer toggle"
+  },
+  "autoAnswerDescription": {
+    "message": "Automatically speak the answer when detected",
+    "description": "Description for auto-answer feature"
+  },
+  "voice": {
+    "message": "Voice",
+    "description": "Label for voice selection"
+  },
+  "speechRate": {
+    "message": "Speech Rate",
+    "description": "Label for speech rate slider"
+  },
+  "pitch": {
+    "message": "Pitch",
+    "description": "Label for pitch slider"
+  },
+  "volume": {
+    "message": "Volume",
+    "description": "Label for volume slider"
+  },
+  "experimentalAudioInjection": {
+    "message": "Experimental: Audio Injection",
+    "description": "Label for audio injection toggle"
+  },
+  "audioInjectionWarning": {
+    "message": "Injects audio directly into microphone stream. Use with caution!",
+    "description": "Warning for audio injection feature"
+  },
+  "settings": {
+    "message": "Settings",
+    "description": "Button text for settings"
+  },
+  "help": {
+    "message": "Help",
+    "description": "Link text for help"
+  },
+  "feedback": {
+    "message": "Feedback",
+    "description": "Link text for feedback"
+  },
+  "clearChat": {
+    "message": "Clear Chat",
+    "description": "Button text to clear chat"
+  },
+  "toggleTheme": {
+    "message": "Toggle Theme",
+    "description": "Button text to toggle theme"
+  },
+  "toggleTranscription": {
+    "message": "Toggle Transcription Visibility",
+    "description": "Button text to toggle transcription visibility"
+  },
+  "copyToClipboard": {
+    "message": "Copy to Clipboard",
+    "description": "Button text to copy to clipboard"
+  },
+  "generatingResponse": {
+    "message": "Generating response...",
+    "description": "Text shown when generating a response"
+  },
+  "regeneratingAnswer": {
+    "message": "Regenerating answer...",
+    "description": "Text shown when regenerating an answer"
+  },
+  "noAnswerToSpeak": {
+    "message": "No answer to speak",
+    "description": "Error message when there's no answer to speak"
+  },
+  "noAnswerToCopy": {
+    "message": "No answer to copy",
+    "description": "Error message when there's no answer to copy"
+  },
+  "noQuestionToRefresh": {
+    "message": "No question to refresh",
+    "description": "Error message when there's no question to refresh"
+  },
+  "answerCopied": {
+    "message": "Answer copied to clipboard",
+    "description": "Success message when answer is copied"
+  },
+  "speakingAnswer": {
+    "message": "Speaking answer...",
+    "description": "Status message when speaking answer"
+  },
+  "errorSpeakingAnswer": {
+    "message": "Error speaking answer",
+    "description": "Error message when speaking fails"
+  },
+  "errorCopyingToClipboard": {
+    "message": "Error copying to clipboard",
+    "description": "Error message when copying fails"
+  },
+  "autoAnswerEnabled": {
+    "message": "Auto-answer enabled",
+    "description": "Status message when auto-answer is enabled"
+  },
+  "autoAnswerDisabled": {
+    "message": "Auto-answer disabled",
+    "description": "Status message when auto-answer is disabled"
+  },
+  "audioInjectionEnabled": {
+    "message": "Audio injection enabled",
+    "description": "Status message when audio injection is enabled"
+  },
+  "audioInjectionDisabled": {
+    "message": "Audio injection disabled",
+    "description": "Status message when audio injection is disabled"
+  },
+  "errorChangingVoice": {
+    "message": "Error changing voice",
+    "description": "Error message when changing voice fails"
+  },
+  "audioInjectionWarningMessage": {
+    "message": "WARNING: Audio injection is an experimental feature that injects audio directly into your microphone stream. This should only be used in appropriate contexts and never to deceive others. Do you understand and consent to using this feature?",
+    "description": "Warning message for audio injection feature"
+  },
+  "chatCleared": {
+    "message": "Chat cleared",
+    "description": "Status message when chat is cleared"
+  },
+  "apiKeyError": {
+    "message": "API key error. Please check your API key in the options page.",
+    "description": "Error message for API key issues"
+  },
+  "rateLimitExceeded": {
+    "message": "Rate limit exceeded. Please try again later.",
+    "description": "Error message for rate limit issues"
+  },
+  "serviceUnavailable": {
+    "message": "The LLM service is currently unavailable. Please try again later.",
+    "description": "Error message for service unavailability"
+  },
+  "generalError": {
+    "message": "Sorry, I encountered an error while generating a response.",
+    "description": "General error message"
+  },
+  "languageSettings": {
+    "message": "Language Settings",
+    "description": "Header for language settings"
+  },
+  "interfaceLanguage": {
+    "message": "Interface Language",
+    "description": "Label for interface language selection"
+  },
+  "transcriptionLanguage": {
+    "message": "Transcription Language",
+    "description": "Label for transcription language selection"
+  },
+  "responseLanguage": {
+    "message": "Response Language",
+    "description": "Label for response language selection"
+  },
+  "languageSettingsDescription": {
+    "message": "Choose your preferred languages for the interface, transcription, and AI responses.",
+    "description": "Description for language settings"
+  },
+  "saveSettings": {
+    "message": "Save Settings",
+    "description": "Button text to save settings"
+  },
+  "settingsSaved": {
+    "message": "Settings saved successfully",
+    "description": "Success message when settings are saved"
+  },
+  "errorSavingSettings": {
+    "message": "Error saving settings",
+    "description": "Error message when saving settings fails"
+  }
+}

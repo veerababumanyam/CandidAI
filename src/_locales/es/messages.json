@@ -1,0 +1,246 @@
+{
+  "appName": {
+    "message": "CandidAI - Asistente de Entrevistas",
+    "description": "The name of the extension"
+  },
+  "appDescription": {
+    "message": "Asistente de entrevistas con IA que te ayuda a prepararte y destacar en entrevistas de trabajo",
+    "description": "The description of the extension"
+  },
+  "startListening": {
+    "message": "Comenzar a Escuchar",
+    "description": "Button text to start listening"
+  },
+  "stopListening": {
+    "message": "Dejar de Escuchar",
+    "description": "Button text to stop listening"
+  },
+  "notListening": {
+    "message": "No escuchando",
+    "description": "Status text when not listening"
+  },
+  "listening": {
+    "message": "Escuchando...",
+    "description": "Status text when listening"
+  },
+  "transcribedQuestion": {
+    "message": "Pregunta Transcrita",
+    "description": "Header for transcribed question section"
+  },
+  "noQuestionDetected": {
+    "message": "Aún no se ha detectado ninguna pregunta. Comienza a escuchar para iniciar la transcripción.",
+    "description": "Placeholder text when no question is detected"
+  },
+  "aiSuggestions": {
+    "message": "Sugerencias de IA",
+    "description": "Header for AI suggestions section"
+  },
+  "suggestionsPlaceholder": {
+    "message": "Las sugerencias de IA aparecerán aquí una vez que se detecte una pregunta.",
+    "description": "Placeholder text for AI suggestions"
+  },
+  "followUpChat": {
+    "message": "Chat de Seguimiento",
+    "description": "Header for follow-up chat section"
+  },
+  "chatWelcome": {
+    "message": "Haz preguntas de seguimiento o solicita aclaraciones sobre las sugerencias de IA.",
+    "description": "Welcome message in chat"
+  },
+  "chatInputPlaceholder": {
+    "message": "Haz una pregunta de seguimiento...",
+    "description": "Placeholder text for chat input"
+  },
+  "copy": {
+    "message": "Copiar",
+    "description": "Button text to copy"
+  },
+  "speak": {
+    "message": "Hablar",
+    "description": "Button text to speak"
+  },
+  "autoAnswer": {
+    "message": "Respuesta Automática",
+    "description": "Button text for auto-answer"
+  },
+  "refresh": {
+    "message": "Actualizar",
+    "description": "Button text to refresh"
+  },
+  "autoAnswerSettings": {
+    "message": "Configuración de Respuesta Automática",
+    "description": "Header for auto-answer settings"
+  },
+  "enableAutoAnswer": {
+    "message": "Habilitar Respuesta Automática",
+    "description": "Label for auto-answer toggle"
+  },
+  "autoAnswerDescription": {
+    "message": "Hablar automáticamente la respuesta cuando se detecte",
+    "description": "Description for auto-answer feature"
+  },
+  "voice": {
+    "message": "Voz",
+    "description": "Label for voice selection"
+  },
+  "speechRate": {
+    "message": "Velocidad de Habla",
+    "description": "Label for speech rate slider"
+  },
+  "pitch": {
+    "message": "Tono",
+    "description": "Label for pitch slider"
+  },
+  "volume": {
+    "message": "Volumen",
+    "description": "Label for volume slider"
+  },
+  "experimentalAudioInjection": {
+    "message": "Experimental: Inyección de Audio",
+    "description": "Label for audio injection toggle"
+  },
+  "audioInjectionWarning": {
+    "message": "Inyecta audio directamente en el flujo del micrófono. ¡Usar con precaución!",
+    "description": "Warning for audio injection feature"
+  },
+  "settings": {
+    "message": "Configuración",
+    "description": "Button text for settings"
+  },
+  "help": {
+    "message": "Ayuda",
+    "description": "Link text for help"
+  },
+  "feedback": {
+    "message": "Comentarios",
+    "description": "Link text for feedback"
+  },
+  "clearChat": {
+    "message": "Limpiar Chat",
+    "description": "Button text to clear chat"
+  },
+  "toggleTheme": {
+    "message": "Cambiar Tema",
+    "description": "Button text to toggle theme"
+  },
+  "toggleTranscription": {
+    "message": "Alternar Visibilidad de Transcripción",
+    "description": "Button text to toggle transcription visibility"
+  },
+  "copyToClipboard": {
+    "message": "Copiar al Portapapeles",
+    "description": "Button text to copy to clipboard"
+  },
+  "generatingResponse": {
+    "message": "Generando respuesta...",
+    "description": "Text shown when generating a response"
+  },
+  "regeneratingAnswer": {
+    "message": "Regenerando respuesta...",
+    "description": "Text shown when regenerating an answer"
+  },
+  "noAnswerToSpeak": {
+    "message": "No hay respuesta para hablar",
+    "description": "Error message when there's no answer to speak"
+  },
+  "noAnswerToCopy": {
+    "message": "No hay respuesta para copiar",
+    "description": "Error message when there's no answer to copy"
+  },
+  "noQuestionToRefresh": {
+    "message": "No hay pregunta para actualizar",
+    "description": "Error message when there's no question to refresh"
+  },
+  "answerCopied": {
+    "message": "Respuesta copiada al portapapeles",
+    "description": "Success message when answer is copied"
+  },
+  "speakingAnswer": {
+    "message": "Hablando respuesta...",
+    "description": "Status message when speaking answer"
+  },
+  "errorSpeakingAnswer": {
+    "message": "Error al hablar la respuesta",
+    "description": "Error message when speaking fails"
+  },
+  "errorCopyingToClipboard": {
+    "message": "Error al copiar al portapapeles",
+    "description": "Error message when copying fails"
+  },
+  "autoAnswerEnabled": {
+    "message": "Respuesta automática habilitada",
+    "description": "Status message when auto-answer is enabled"
+  },
+  "autoAnswerDisabled": {
+    "message": "Respuesta automática deshabilitada",
+    "description": "Status message when auto-answer is disabled"
+  },
+  "audioInjectionEnabled": {
+    "message": "Inyección de audio habilitada",
+    "description": "Status message when audio injection is enabled"
+  },
+  "audioInjectionDisabled": {
+    "message": "Inyección de audio deshabilitada",
+    "description": "Status message when audio injection is disabled"
+  },
+  "errorChangingVoice": {
+    "message": "Error al cambiar la voz",
+    "description": "Error message when changing voice fails"
+  },
+  "audioInjectionWarningMessage": {
+    "message": "ADVERTENCIA: La inyección de audio es una función experimental que inyecta audio directamente en el flujo de tu micrófono. Esto solo debe usarse en contextos apropiados y nunca para engañar a otros. ¿Entiendes y consientes el uso de esta función?",
+    "description": "Warning message for audio injection feature"
+  },
+  "chatCleared": {
+    "message": "Chat limpiado",
+    "description": "Status message when chat is cleared"
+  },
+  "apiKeyError": {
+    "message": "Error de clave API. Por favor, verifica tu clave API en la página de opciones.",
+    "description": "Error message for API key issues"
+  },
+  "rateLimitExceeded": {
+    "message": "Límite de tasa excedido. Por favor, inténtalo de nuevo más tarde.",
+    "description": "Error message for rate limit issues"
+  },
+  "serviceUnavailable": {
+    "message": "El servicio LLM no está disponible actualmente. Por favor, inténtalo de nuevo más tarde.",
+    "description": "Error message for service unavailability"
+  },
+  "generalError": {
+    "message": "Lo siento, encontré un error al generar una respuesta.",
+    "description": "General error message"
+  },
+  "languageSettings": {
+    "message": "Configuración de Idioma",
+    "description": "Header for language settings"
+  },
+  "interfaceLanguage": {
+    "message": "Idioma de la Interfaz",
+    "description": "Label for interface language selection"
+  },
+  "transcriptionLanguage": {
+    "message": "Idioma de Transcripción",
+    "description": "Label for transcription language selection"
+  },
+  "responseLanguage": {
+    "message": "Idioma de Respuesta",
+    "description": "Label for response language selection"
+  },
+  "languageSettingsDescription": {
+    "message": "Elige tus idiomas preferidos para la interfaz, transcripción y respuestas de IA.",
+    "description": "Description for language settings"
+  },
+  "saveSettings": {
+    "message": "Guardar Configuración",
+    "description": "Button text to save settings"
+  },
+  "settingsSaved": {
+    "message": "Configuración guardada exitosamente",
+    "description": "Success message when settings are saved"
+  },
+  "errorSavingSettings": {
+    "message": "Error al guardar la configuración",
+    "description": "Error message when saving settings fails"
+  }
+}

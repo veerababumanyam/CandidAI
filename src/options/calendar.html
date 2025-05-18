@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CandidAI - Interview Calendar</title>
+  <link rel="stylesheet" href="options.css">
+  <link rel="stylesheet" href="calendar.css">
+</head>
+<body>
+  <div class="container">
+    <header class="app-header">
+      <div class="logo-container">
+        <img src="../assets/images/logo.png" alt="CandidAI Logo" class="logo">
+        <h1>CandidAI Interview Calendar</h1>
+      </div>
+      <div class="header-controls">
+        <button id="backToOptions" class="secondary-button">
+          <span class="button-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+          </span>
+          <span class="button-text">Back to Options</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <section class="calendar-section">
+        <div class="section-header">
+          <h2>Upcoming Interviews</h2>
+          <div class="section-controls">
+            <button id="addEventButton" class="primary-button">
+              <span class="button-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+              </span>
+              <span class="button-text">Add Interview</span>
+            </button>
+          </div>
+        </div>
+        <div class="section-content">
+          <div class="calendar-view">
+            <div class="calendar-header">
+              <button id="prevMonthButton" class="calendar-nav-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+              </button>
+              <h3 id="currentMonthYear">June 2023</h3>
+              <button id="nextMonthButton" class="calendar-nav-button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </button>
+            </div>
+            <div class="calendar-grid">
+              <div class="calendar-day-header">Sun</div>
+              <div class="calendar-day-header">Mon</div>
+              <div class="calendar-day-header">Tue</div>
+              <div class="calendar-day-header">Wed</div>
+              <div class="calendar-day-header">Thu</div>
+              <div class="calendar-day-header">Fri</div>
+              <div class="calendar-day-header">Sat</div>
+              <!-- Calendar days will be added here dynamically -->
+            </div>
+          </div>
+          
+          <div class="events-list-container">
+            <h3>Upcoming Events</h3>
+            <div class="events-list" id="upcomingEventsList">
+              <!-- Events will be added here dynamically -->
+              <div class="empty-state" id="emptyEventsState">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                <p>No upcoming interviews</p>
+                <p class="empty-state-subtext">Click "Add Interview" to schedule your first interview</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Event Form Modal -->
+    <div id="eventFormModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="modalTitle">Add Interview</h2>
+          <button id="closeModal" class="close-button">&times;</button>
+        </div>
+        <div class="modal-body">
+          <form id="eventForm">
+            <input type="hidden" id="eventId">
+            
+            <div class="form-group">
+              <label for="eventTitle">Title</label>
+              <input type="text" id="eventTitle" placeholder="Interview with Company" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="eventCompany">Company</label>
+              <input type="text" id="eventCompany" placeholder="Company Name" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="eventPosition">Position</label>
+              <input type="text" id="eventPosition" placeholder="Job Title" required>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label for="eventStartDate">Date</label>
+                <input type="date" id="eventStartDate" required>
+              </div>
+              
+              <div class="form-group">
+                <label for="eventStartTime">Start Time</label>
+                <input type="time" id="eventStartTime" required>
+              </div>
+              
+              <div class="form-group">
+                <label for="eventEndTime">End Time</label>
+                <input type="time" id="eventEndTime" required>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label for="eventLocation">Location</label>
+              <input type="text" id="eventLocation" placeholder="Location or Meeting Link">
+            </div>
+            
+            <div class="form-group">
+              <label for="eventDescription">Description</label>
+              <textarea id="eventDescription" placeholder="Interview details, agenda, etc."></textarea>
+            </div>
+            
+            <div class="form-group">
+              <label for="eventNotes">Personal Notes</label>
+              <textarea id="eventNotes" placeholder="Your personal notes for preparation"></textarea>
+            </div>
+            
+            <div class="form-group checkbox-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="eventNotifications" checked>
+                <span>Enable Notifications</span>
+              </label>
+              <p class="help-text">Receive notifications before the interview</p>
+            </div>
+            
+            <div class="form-group checkbox-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="eventPreloadContext" checked>
+                <span>Preload Context</span>
+              </label>
+              <p class="help-text">Automatically load company and position info before the interview</p>
+            </div>
+            
+            <div class="form-actions">
+              <button type="button" id="cancelEventButton" class="secondary-button">Cancel</button>
+              <button type="submit" id="saveEventButton" class="primary-button">Save</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Event Details Modal -->
+    <div id="eventDetailsModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="detailsModalTitle">Interview Details</h2>
+          <button id="closeDetailsModal" class="close-button">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="event-details">
+            <div class="event-detail">
+              <span class="detail-label">Company:</span>
+              <span id="detailCompany" class="detail-value"></span>
+            </div>
+            
+            <div class="event-detail">
+              <span class="detail-label">Position:</span>
+              <span id="detailPosition" class="detail-value"></span>
+            </div>
+            
+            <div class="event-detail">
+              <span class="detail-label">Date:</span>
+              <span id="detailDate" class="detail-value"></span>
+            </div>
+            
+            <div class="event-detail">
+              <span class="detail-label">Time:</span>
+              <span id="detailTime" class="detail-value"></span>
+            </div>
+            
+            <div class="event-detail">
+              <span class="detail-label">Location:</span>
+              <span id="detailLocation" class="detail-value"></span>
+            </div>
+            
+            <div class="event-detail">
+              <span class="detail-label">Description:</span>
+              <div id="detailDescription" class="detail-value detail-text"></div>
+            </div>
+            
+            <div class="event-detail">
+              <span class="detail-label">Notes:</span>
+              <div id="detailNotes" class="detail-value detail-text"></div>
+            </div>
+            
+            <div class="event-detail">
+              <span class="detail-label">Notifications:</span>
+              <span id="detailNotifications" class="detail-value"></span>
+            </div>
+            
+            <div class="event-detail">
+              <span class="detail-label">Preload Context:</span>
+              <span id="detailPreloadContext" class="detail-value"></span>
+            </div>
+          </div>
+          
+          <div class="event-actions">
+            <button id="editEventButton" class="secondary-button">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+              Edit
+            </button>
+            <button id="deleteEventButton" class="danger-button">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                <line x1="10" y1="11" x2="10" y2="17"></line>
+                <line x1="14" y1="11" x2="14" y2="17"></line>
+              </svg>
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="app-footer">
+      <div class="footer-content">
+        <span class="version">CandidAI v1.0</span>
+        <a href="#" id="helpLink" class="footer-link">Help</a>
+        <a href="#" id="feedbackLink" class="footer-link">Feedback</a>
+      </div>
+    </footer>
+  </div>
+
+  <script src="calendar.js" type="module"></script>
+</body>
+</html>

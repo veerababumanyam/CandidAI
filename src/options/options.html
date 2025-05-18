@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CandidAI Settings</title>
+  <link rel="stylesheet" href="../css/variables.css">
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <a href="#settings-container" class="skip-to-content">Skip to content</a>
+  <div class="container">
+    <header class="app-header">
+      <div class="logo-container">
+        <img src="../icons/logo3.png" alt="CandidAI Logo" class="logo">
+        <h1>CandidAI Settings</h1>
+      </div>
+    </header>
+
+    <main id="settings-container" class="settings-container">
+      <section class="settings-section" id="apiKeySettings">
+        <h2>API Key Management</h2>
+        <p class="section-description">
+          Configure your API keys for different LLM providers. Your keys are stored locally in your browser.
+        </p>
+
+        <div class="form-group">
+          <label for="openaiApiKey">OpenAI API Key</label>
+          <div class="api-key-input">
+            <input type="password" id="openaiApiKey" placeholder="Enter your OpenAI API key">
+            <button class="toggle-visibility" data-for="openaiApiKey">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="geminiApiKey">Google Gemini API Key</label>
+          <div class="api-key-input">
+            <input type="password" id="geminiApiKey" placeholder="Enter your Google Gemini API key">
+            <button class="toggle-visibility" data-for="geminiApiKey">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="anthropicApiKey">Anthropic API Key</label>
+          <div class="api-key-input">
+            <input type="password" id="anthropicApiKey" placeholder="Enter your Anthropic API key">
+            <button class="toggle-visibility" data-for="anthropicApiKey">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="settings-section" id="llmSettings">
+        <h2>LLM Configuration</h2>
+        <p class="section-description">
+          Choose your preferred LLM provider and configure fallback options.
+        </p>
+
+        <div class="form-group">
+          <label for="preferredLLM">Preferred LLM Provider</label>
+          <select id="preferredLLM">
+            <option value="openai">OpenAI (GPT-3.5/4)</option>
+            <option value="anthropic">Anthropic (Claude)</option>
+            <option value="gemini">Google Gemini</option>
+          </select>
+          <div class="provider-info" id="providerInfo">
+            <div class="provider-status" id="providerStatus">
+              <!-- Provider status will be populated by JavaScript -->
+            </div>
+            <div class="provider-description" id="providerDescription">
+              <!-- Provider description will be populated by JavaScript -->
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="modelSelection">Model Selection</label>
+          <div class="model-selection-container" id="modelSelectionContainer">
+            <!-- Model selection will be populated by JavaScript -->
+            <div class="model-option openai-model">
+              <select id="openaiModel" class="model-select">
+                <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Faster, cheaper)</option>
+                <option value="gpt-4">GPT-4 (More capable, expensive)</option>
+              </select>
+            </div>
+            <div class="model-option anthropic-model">
+              <select id="anthropicModel" class="model-select">
+                <option value="claude-3-haiku-20240307">Claude 3 Haiku (Fastest, cheapest)</option>
+                <option value="claude-3-sonnet-20240229">Claude 3 Sonnet (Balanced)</option>
+                <option value="claude-3-opus-20240229">Claude 3 Opus (Most capable, expensive)</option>
+              </select>
+            </div>
+            <div class="model-option gemini-model">
+              <select id="geminiModel" class="model-select">
+                <option value="gemini-pro">Gemini Pro</option>
+                <option value="gemini-ultra">Gemini Ultra (If available)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Fallback Order</label>
+          <p class="helper-text">If your preferred provider fails, the system will try these providers in order:</p>
+          <div class="fallback-container" id="fallbackOrder">
+            <!-- Fallback order will be populated by JavaScript -->
+          </div>
+          <div class="fallback-controls">
+            <button id="resetFallbackOrder" class="small-button">Reset to Default</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="tokenBudget">Monthly Token Budget</label>
+          <div class="token-budget-container">
+            <input type="range" id="tokenBudget" min="10000" max="1000000" step="10000" value="100000">
+            <span id="tokenBudgetValue">100,000 tokens</span>
+          </div>
+          <p class="helper-text">Set a monthly token budget to help manage costs. The extension will warn you when you're approaching your limit.</p>
+        </div>
+      </section>
+
+      <section class="settings-section" id="resumeSettings">
+        <h2>Resume & Job Description</h2>
+        <p class="section-description">
+          Upload your resume and add job descriptions to get personalized suggestions.
+        </p>
+
+        <div class="form-group">
+          <label for="resumeUpload">Upload Resume (PDF or DOCX)</label>
+          <div class="file-upload-container">
+            <input type="file" id="resumeUpload" accept=".pdf,.docx,.doc">
+            <button class="upload-button" id="resumeUploadButton">Choose File</button>
+            <span class="file-name" id="resumeFileName">No file chosen</span>
+            <button class="delete-button" id="resumeDeleteButton" title="Delete resume">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                <line x1="10" y1="11" x2="10" y2="17"></line>
+                <line x1="14" y1="11" x2="14" y2="17"></line>
+              </svg>
+            </button>
+          </div>
+          <p class="helper-text">Upload your resume to get personalized interview suggestions. Supported formats: PDF, DOCX, DOC (max 5MB).</p>
+        </div>
+
+        <div class="form-group">
+          <label for="jobDescription">Job Description</label>
+          <div class="textarea-container">
+            <textarea id="jobDescription" rows="8" placeholder="Paste job description here to get tailored interview suggestions..."></textarea>
+            <div class="textarea-actions">
+              <button id="clearJobDescription" class="icon-button" title="Clear job description">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+              <button id="saveJobDescription" class="icon-button" title="Save job description">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                  <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="jd-status">
+            <span id="jdSaveStatus" class="save-status"></span>
+            <span id="jdWordCount" class="word-count">0 words</span>
+          </div>
+          <p class="helper-text">Adding a job description helps CandidAI provide more relevant interview suggestions tailored to the position.</p>
+        </div>
+      </section>
+
+      <section class="settings-section" id="preloadedContentSettings">
+        <h2>Preloaded Content</h2>
+        <p class="section-description">
+          Add anticipated questions and STAR examples to improve AI responses.
+        </p>
+
+        <div class="form-group">
+          <label for="anticipatedQuestions">Anticipated Questions</label>
+          <div class="textarea-container">
+            <textarea id="anticipatedQuestions" rows="6" placeholder="Add questions you expect to be asked during interviews, one per line..."></textarea>
+            <div class="textarea-actions">
+              <button id="clearAnticipatedQuestions" class="icon-button" title="Clear anticipated questions">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+              <button id="saveAnticipatedQuestions" class="icon-button" title="Save anticipated questions">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                  <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="content-status">
+            <span id="questionsStatus" class="save-status"></span>
+            <span id="questionsCount" class="count">0 questions</span>
+          </div>
+          <p class="helper-text">Adding anticipated questions helps the AI prepare better responses for your specific interview needs.</p>
+        </div>
+
+        <div class="form-group">
+          <label for="starExamples">STAR Examples</label>
+          <div class="textarea-container">
+            <textarea id="starExamples" rows="8" placeholder="Add STAR examples (Situation, Task, Action, Result) for behavioral questions..."></textarea>
+            <div class="textarea-actions">
+              <button id="clearStarExamples" class="icon-button" title="Clear STAR examples">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+              <button id="saveStarExamples" class="icon-button" title="Save STAR examples">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                  <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="content-status">
+            <span id="starStatus" class="save-status"></span>
+            <span id="starCount" class="count">0 examples</span>
+          </div>
+          <p class="helper-text">STAR examples help the AI provide more personalized responses based on your actual experiences. Format: Situation, Task, Action, Result.</p>
+        </div>
+      </section>
+
+      <section class="settings-section" id="responseStyleSettings">
+        <h2>Response Style Settings</h2>
+        <p class="section-description">
+          Customize how the AI responds to your questions.
+        </p>
+
+        <div class="form-group">
+          <label for="responseStyle">Response Style</label>
+          <select id="responseStyle">
+            <option value="balanced">Balanced (Default)</option>
+            <option value="concise">Concise</option>
+            <option value="detailed">Detailed</option>
+            <option value="confident">Confident</option>
+            <option value="thoughtful">Thoughtful</option>
+          </select>
+          <p class="helper-text">Choose how the AI should respond to your questions.</p>
+        </div>
+
+        <div class="form-group">
+          <label for="responseLength">Response Length</label>
+          <div class="slider-container">
+            <input type="range" id="responseLength" min="1" max="5" step="1" value="3">
+            <div class="slider-labels">
+              <span>Very Brief</span>
+              <span>Brief</span>
+              <span>Medium</span>
+              <span>Detailed</span>
+              <span>Very Detailed</span>
+            </div>
+          </div>
+          <p class="helper-text">Adjust how detailed the AI's responses should be.</p>
+        </div>
+
+        <div class="form-group">
+          <label for="formality">Formality Level</label>
+          <div class="slider-container">
+            <input type="range" id="formality" min="1" max="5" step="1" value="3">
+            <div class="slider-labels">
+              <span>Casual</span>
+              <span>Conversational</span>
+              <span>Neutral</span>
+              <span>Professional</span>
+              <span>Formal</span>
+            </div>
+          </div>
+          <p class="helper-text">Adjust how formal the AI's tone should be.</p>
+        </div>
+      </section>
+
+      <section class="settings-section" id="languageSettings">
+        <h2 data-i18n="languageSettings">Language Settings</h2>
+        <p class="section-description" data-i18n="languageSettingsDescription">
+          Choose your preferred languages for the interface, transcription, and AI responses.
+        </p>
+
+        <div class="form-group">
+          <label for="interfaceLanguage" data-i18n="interfaceLanguage">Interface Language</label>
+          <select id="interfaceLanguage">
+            <!-- Will be populated dynamically -->
+          </select>
+          <p class="helper-text">Changes the language of the user interface.</p>
+        </div>
+
+        <div class="form-group">
+          <label for="transcriptionLanguage" data-i18n="transcriptionLanguage">Transcription Language</label>
+          <select id="transcriptionLanguage">
+            <!-- Will be populated dynamically -->
+          </select>
+          <p class="helper-text">Sets the language for speech recognition.</p>
+        </div>
+
+        <div class="form-group">
+          <label for="responseLanguage" data-i18n="responseLanguage">Response Language</label>
+          <select id="responseLanguage">
+            <!-- Will be populated dynamically -->
+          </select>
+          <p class="helper-text">Sets the language for AI responses. "Same as transcription" will match the transcription language.</p>
+        </div>
+      </section>
+
+      <section class="settings-section" id="performanceHubSettings">
+        <h2>Performance Hub</h2>
+        <p class="section-description">
+          Track your interview performance and get personalized improvement suggestions.
+        </p>
+
+        <div class="form-group">
+          <div class="feature-card">
+            <div class="feature-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+            </div>
+            <div class="feature-content">
+              <h3>Interview Performance Analytics</h3>
+              <p>Track your interview history, analyze performance metrics, and identify areas for improvement.</p>
+              <a href="performance-hub.html" class="feature-link">
+                Open Performance Hub
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="feature-card">
+            <div class="feature-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+            </div>
+            <div class="feature-content">
+              <h3>Interview Calendar</h3>
+              <p>Schedule and manage your upcoming interviews with reminders and preparation tools.</p>
+              <a href="calendar.html" class="feature-link">
+                Open Calendar
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="settings-section" id="accessibilitySettings">
+        <h2>Accessibility Settings</h2>
+        <p class="section-description">
+          Customize the appearance and behavior of the extension.
+        </p>
+
+        <div class="form-group">
+          <label for="fontSize">Font Size</label>
+          <select id="fontSize">
+            <option value="small">Small</option>
+            <option value="medium">Medium</option>
+            <option value="large">Large</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="autoScroll">Auto-Scroll</label>
+          <div class="toggle-switch">
+            <input type="checkbox" id="autoScroll">
+            <span class="toggle-slider"></span>
+          </div>
+        </div>
+      </section>
+
+      <div class="button-container">
+        <button id="saveSettings" class="primary-button">Save Settings</button>
+        <button id="resetSettings" class="secondary-button">Reset to Defaults</button>
+      </div>
+    </main>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>
