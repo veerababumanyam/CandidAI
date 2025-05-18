@@ -3,6 +3,14 @@
  * Handles extension lifecycle events and coordinates between components
  */
 
+// Import required modules
+// Note: Service workers don't support dynamic imports, so we need to import everything upfront
+import calendarIntegration from '../js/services/calendarIntegration.js';
+import historyManager from '../js/services/historyManager.js';
+import llmOrchestrator from '../js/services/llmOrchestrator.js';
+import contextManager from '../js/services/contextManager.js';
+import visualAnalyzer from '../js/services/visualAnalyzer.js';
+
 // State
 let currentPlatform = null;
 let isListening = false;
@@ -41,8 +49,7 @@ chrome.runtime.onInstalled.addListener((details) => {
     );
 
     // Initialize calendar integration
-    import('../js/services/calendarIntegration.js').then(async ({ default: calendarIntegration }) => {
-      await calendarIntegration.initialize();
+    calendarIntegration.initialize().then(() => {
       console.log('Calendar integration initialized');
     }).catch(error => {
       console.error('Error initializing calendar integration:', error);
@@ -52,11 +59,24 @@ chrome.runtime.onInstalled.addListener((details) => {
 
 // Handle extension icon click - open side panel
 chrome.action.onClicked.addListener((tab) => {
+  console.log('Extension icon clicked, opening side panel for tab:', tab.id);
   activeTabId = tab.id;
-  chrome.sidePanel.open({ tabId: tab.id });
 
-  // Check if we're on a supported platform
-  checkPlatform(tab);
+  try {
+    // Open the side panel
+    chrome.sidePanel.open({ tabId: tab.id })
+      .then(() => {
+        console.log('Side panel opened successfully');
+      })
+      .catch((error) => {
+        console.error('Error opening side panel:', error);
+      });
+
+    // Check if we're on a supported platform
+    checkPlatform(tab);
+  } catch (error) {
+    console.error('Exception when opening side panel:', error);
+  }
 });
 
 // Track active tab changes
@@ -148,15 +168,12 @@ async function startListening() {
 
     // Initialize history manager if needed
     if (!historyManagerInitialized) {
-      const { default: historyManager } = await import('../js/services/historyManager.js');
       await historyManager.initialize();
       historyManagerInitialized = true;
     }
 
     // Start a new interview session if consent is given
     if (historyManagerInitialized) {
-      const { default: historyManager } = await import('../js/services/historyManager.js');
-
       if (historyManager.hasConsent()) {
         // Get company and position from job description if available
         const { jobDescription } = await new Promise(resolve => {
@@ -248,8 +265,6 @@ async function stopListening() {
 
     // End the current interview session if one is active
     if (currentInterviewId && historyManagerInitialized) {
-      const { default: historyManager } = await import('../js/services/historyManager.js');
-
       if (historyManager.hasConsent()) {
         await historyManager.endInterview(currentInterviewId);
         console.log('Ended interview session:', currentInterviewId);
@@ -294,8 +309,7 @@ async function processQuestion(question) {
   });
 
   try {
-    // Import the LLM orchestrator
-    const { default: llmOrchestrator } = await import('../js/services/llmOrchestrator.js');
+    // Use the pre-imported LLM orchestrator
 
     // Show loading state
     chrome.runtime.sendMessage({
@@ -320,8 +334,6 @@ async function processQuestion(question) {
 
     // Record the question and answer in the history manager if an interview is active
     if (currentInterviewId && historyManagerInitialized) {
-      const { default: historyManager } = await import('../js/services/historyManager.js');
-
       if (historyManager.hasConsent()) {
         await historyManager.addQuestionAnswer(
           currentInterviewId,
@@ -398,9 +410,7 @@ async function processQuestion(question) {
  */
 async function processUserChatMessage(message, conversationHistory = []) {
   try {
-    // Import the LLM orchestrator and context manager
-    const { default: llmOrchestrator } = await import('../js/services/llmOrchestrator.js');
-    const { default: contextManager } = await import('../js/services/contextManager.js');
+    // Use the pre-imported LLM orchestrator and context manager
 
     // Add the user message to the context
     contextManager.addMessage('user', message);
@@ -499,35 +509,69 @@ function detectPlatform(url) {
  * @param {string} iconType - The icon type for side panel message ('success', 'error', 'warning', 'info')
  */
 function sendNotification(title, message, type = 'basic', iconType = 'info') {
-  // Create notification options
-  const options = {
-    type: type,
-    iconUrl: 'icons/logo3.png',
-    title: title,
-    message: message,
-    priority: 1,
-    silent: false
-  };
+  // Send to side panel if it's open
+  try {
+    chrome.runtime.sendMessage({
+      action: 'showStatusMessage',
+      message: message,
+      type: iconType
+    }).catch(() => {
+      // Side panel might not be open, ignore error
+    });
+  } catch (error) {
+    console.log('Error sending message to side panel:', error);
+  }
 
-  // Show the notification
-  chrome.notifications.create(options, (notificationId) => {
-    console.log('Notification created with ID:', notificationId);
+  // Skip browser notifications for now to avoid the image loading error
+  // We'll use console logs instead
+  console.log(`NOTIFICATION: ${title} - ${message}`);
 
-    // Auto-clear notification after 5 seconds
-    setTimeout(() => {
-      chrome.notifications.clear(notificationId);
-    }, 5000);
-  });
+  /* Commented out to avoid the image loading error
+  try {
+    // Create notification options
+    const options = {
+      type: type,
+      iconUrl: chrome.runtime.getURL('icons/logo3.png'),
+      title: title,
+      message: message,
+      priority: 1,
+      silent: false
+    };
 
-  // Also send to side panel if it's open
-  chrome.runtime.sendMessage({
-    action: 'showStatusMessage',
-    message: message,
-    type: iconType
-  }).catch(() => {
-    // Side panel might not be open, ignore error
-  });
+    // Show the notification
+    chrome.notifications.create(options, (notificationId) => {
+      if (chrome.runtime.lastError) {
+        console.error('Error creating notification:', chrome.runtime.lastError);
+        return;
+      }
+
+      console.log('Notification created with ID:', notificationId);
+
+      // Auto-clear notification after 5 seconds
+      setTimeout(() => {
+        try {
+          chrome.notifications.clear(notificationId, () => {
+            if (chrome.runtime.lastError) {
+              console.error('Error clearing notification:', chrome.runtime.lastError);
+              return;
+            }
+            console.log('Notification cleared:', notificationId);
+          });
+        } catch (error) {
+          console.error('Exception when clearing notification:', error);
+        }
+      }, 5000);
+    });
+  } catch (error) {
+    console.error('Exception when creating notification:', error);
+  }
+  */
 }
+
+// Handle extension icon click to open side panel
+chrome.action.onClicked.addListener((tab) => {
+  chrome.sidePanel.open({ tabId: tab.id });
+});
 
 // Listen for messages from content scripts, side panel, or options page
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -613,14 +657,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     case 'clearConversationHistory':
       // Clear conversation history in context manager
-      import('../js/services/contextManager.js').then(({ default: contextManager }) => {
-        contextManager.clearConversationHistory();
-        sendResponse({ success: true });
-      }).catch(error => {
-        console.error('Error clearing conversation history:', error);
-        sendResponse({ success: false, error: error.message });
-      });
-      return true; // Keep the message channel open for async response
+      contextManager.clearConversationHistory();
+      sendResponse({ success: true });
+      break;
 
     case 'regenerateAnswer':
       // Regenerate answer for the given question
@@ -634,24 +673,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     case 'platformDataScraped':
       // Handle platform data from content script
-      import('../js/services/contextManager.js').then(({ default: contextManager }) => {
-        // Update context with platform data
-        contextManager.updatePlatformData(message.data);
+      // Update context with platform data
+      contextManager.updatePlatformData(message.data);
 
-        // Notify sidepanel about new platform data
-        chrome.runtime.sendMessage({
-          action: 'platformDataUpdated',
-          data: message.data
-        }).catch(() => {
-          // Sidepanel might not be open, ignore error
-        });
-
-        sendResponse({ success: true });
-      }).catch(error => {
-        console.error('Error handling platform data:', error);
-        sendResponse({ success: false, error: error.message });
+      // Notify sidepanel about new platform data
+      chrome.runtime.sendMessage({
+        action: 'platformDataUpdated',
+        data: message.data
+      }).catch(() => {
+        // Sidepanel might not be open, ignore error
       });
-      return true; // Keep the message channel open for async response
+
+      sendResponse({ success: true });
+      break;
 
     case 'requestVisualAnalysisPermission':
       // Request permission for visual analysis
@@ -667,14 +701,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     case 'captureScreen':
       // Capture screen and analyze it
-      import('../js/services/visualAnalyzer.js').then(async ({ default: visualAnalyzer }) => {
-        try {
-          // Initialize the visual analyzer
-          await visualAnalyzer.initialize();
-
-          // Capture the screen
-          const imageData = await visualAnalyzer.captureScreen();
-
+      visualAnalyzer.initialize()
+        .then(() => visualAnalyzer.captureScreen())
+        .then(imageData => {
           if (!imageData) {
             sendResponse({ success: false, error: 'Failed to capture screen' });
             return;
@@ -688,38 +717,27 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             imageData,
             analysis
           });
-        } catch (error) {
+        })
+        .catch(error => {
           console.error('Error capturing screen:', error);
           sendResponse({ success: false, error: error.message });
-        }
-      }).catch(error => {
-        console.error('Error importing visual analyzer:', error);
-        sendResponse({ success: false, error: error.message });
-      });
+        });
       return true; // Keep the message channel open for async response
 
     case 'analyzeImage':
       // Analyze an image
-      import('../js/services/visualAnalyzer.js').then(async ({ default: visualAnalyzer }) => {
-        try {
-          // Initialize the visual analyzer
-          await visualAnalyzer.initialize();
-
-          // Analyze the image
-          const analysis = await visualAnalyzer.analyzeImage(message.imageData);
-
+      visualAnalyzer.initialize()
+        .then(() => visualAnalyzer.analyzeImage(message.imageData))
+        .then(analysis => {
           sendResponse({
             success: true,
             analysis
           });
-        } catch (error) {
+        })
+        .catch(error => {
           console.error('Error analyzing image:', error);
           sendResponse({ success: false, error: error.message });
-        }
-      }).catch(error => {
-        console.error('Error importing visual analyzer:', error);
-        sendResponse({ success: false, error: error.message });
-      });
+        });
       return true; // Keep the message channel open for async response
 
     case 'audioCaptureBegan':
