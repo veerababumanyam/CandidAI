@@ -24,7 +24,10 @@
   "side_panel": {
     "default_path": "sidepanel/sidepanel.html"
   },
-  "options_page": "options/options.html",
+  "options_ui": {
+    "page": "options/options.html",
+    "open_in_tab": true
+  },
   "permissions": [
     "storage",
     "sidePanel",
@@ -73,8 +76,11 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["assets/*", "icons/*", "css/*", "offscreen/offscreen.html"],
+      "resources": ["assets/*", "icons/*", "css/*", "offscreen/offscreen.html", "options/*"],
       "matches": ["<all_urls>"]
     }
-  ]
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
 }
