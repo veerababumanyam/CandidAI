@@ -1,6 +1,6 @@
 {
   "name": "candidai",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "AI-powered interview assistant for job seekers",
   "main": "index.js",
   "scripts": {

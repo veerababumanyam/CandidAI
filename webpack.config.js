@@ -6,11 +6,11 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 module.exports = {
   entry: {
     'background/service-worker': './src/background/service-worker.js',
-    'sidepanel/sidepanel': './src/sidepanel/sidepanel.js',
-    'options/options': './src/options/options.js',
     'content/content': './src/content/content.js',
+    'content/platform-integration': './src/content/platform-integration.js',
     'offscreen/offscreen': './src/offscreen/offscreen.js',
-    'visual-analysis': './src/visual-analysis.js'
+    'options/options': './src/options/options.js',
+    'sidepanel/sidepanel': './src/sidepanel/sidepanel.js'
   },
   output: {
     path: path.resolve(__dirname, 'dist'),
@@ -26,60 +26,102 @@ module.exports = {
       },
       {
         test: /\.css$/,
-        use: [MiniCssExtractPlugin.loader, 'css-loader']
+        use: [
+          {
+            loader: MiniCssExtractPlugin.loader,
+            options: {
+              publicPath: '../'
+            }
+          },
+          'css-loader'
+        ]
       },
       {
-        test: /\.(woff|woff2|eot|ttf|otf)$/i,
+        test: /\.(png|jpg|jpeg|gif|svg)$/,
         type: 'asset/resource',
         generator: {
-          filename: 'assets/fonts/[name][ext]'
+          filename: 'assets/[name][ext]'
         }
       },
       {
-        test: /\.(png|svg|jpg|jpeg|gif)$/i,
+        test: /\.(woff|woff2|eot|ttf|otf)$/,
         type: 'asset/resource',
         generator: {
-          filename: 'assets/images/[name][ext]'
+          filename: 'assets/fonts/[name][ext]'
         }
       }
     ]
   },
   plugins: [
     new MiniCssExtractPlugin({
-      filename: '[name].css'
+      filename: 'css/[name].css'
     }),
     new CopyPlugin({
       patterns: [
         { from: 'src/manifest.json', to: 'manifest.json' },
-        { from: 'src/css', to: 'css' },
         { from: 'icons/logos', to: 'icons' },
         { from: 'src/assets', to: 'assets', noErrorOnMissing: true },
-        { from: 'src/_locales', to: '_locales' }
+        { from: 'src/_locales', to: '_locales' },
+        { from: 'src/css', to: 'css' }
       ]
     }),
     new HtmlWebpackPlugin({
       template: './src/sidepanel/sidepanel.html',
       filename: 'sidepanel/sidepanel.html',
-      chunks: ['sidepanel/sidepanel']
+      chunks: ['sidepanel/sidepanel'],
+      inject: true,
+      publicPath: '../'
     }),
     new HtmlWebpackPlugin({
       template: './src/options/options.html',
       filename: 'options/options.html',
-      chunks: ['options/options']
+      chunks: ['options/options'],
+      inject: 'head',
+      publicPath: './',
+      scriptLoading: 'defer'
     }),
     new HtmlWebpackPlugin({
       template: './src/offscreen/offscreen.html',
       filename: 'offscreen/offscreen.html',
-      chunks: ['offscreen/offscreen']
+      chunks: ['offscreen/offscreen'],
+      inject: true,
+      publicPath: '../'
     }),
-    new HtmlWebpackPlugin({
-      template: './src/visual-analysis.html',
-      filename: 'visual-analysis.html',
-      chunks: ['visual-analysis']
+    new CopyPlugin({
+      patterns: [
+        {
+          from: 'dist/options/options.html',
+          to: 'options/options.html',
+          transform(content) {
+            return content.toString().replace(/src="\.\/options\/options\.js"/g, 'src="options.js"');
+          },
+          noErrorOnMissing: true,
+          force: true
+        },
+        {
+          from: 'dist/sidepanel/sidepanel.html',
+          to: 'sidepanel/sidepanel.html',
+          transform(content) {
+            return content.toString().replace(/src="\.\/sidepanel\/sidepanel\.js"/g, 'src="sidepanel.js"');
+          },
+          noErrorOnMissing: true,
+          force: true
+        },
+        {
+          from: 'dist/offscreen/offscreen.html',
+          to: 'offscreen/offscreen.html',
+          transform(content) {
+            return content.toString().replace(/src="\.\/offscreen\/offscreen\.js"/g, 'src="offscreen.js"');
+          },
+          noErrorOnMissing: true,
+          force: true
+        }
+      ]
     })
   ],
   resolve: {
-    extensions: ['.js']
+    extensions: ['.js'],
+    modules: [path.resolve(__dirname, 'src'), 'node_modules']
   },
   optimization: {
     splitChunks: {
