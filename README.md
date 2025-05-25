@@ -1,4 +1,4 @@
-# CandidAI Meetinng Buddy Chrome Extension 🎯
+# CandidAI Meeting Buddy Chrome Extension 🎯
 
 <div align="center">
   <img src="logo.png" alt="CandidAI Logo" width="128" height="128">
@@ -8,6 +8,7 @@
   [![Chrome Web Store](https://img.shields.io/badge/Chrome-Extension-4285F4?style=for-the-badge&logo=google-chrome&logoColor=white)](https://chrome.google.com/webstore)
   [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=for-the-badge)](LICENSE)
   [![Version](https://img.shields.io/badge/Version-1.0.1-e8a396?style=for-the-badge)](package.json)
+  [![GitHub](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github)](https://github.com/veerababumanyam/CandidAI)
 </div>
 
 ## 🚀 Elevate Every Conversation with Contextual Intelligence
