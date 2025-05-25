@@ -249,6 +249,14 @@ npm run build:force
 **Issue**: Want to verify extension is ready before loading in Chrome
 **Solution**: Run `npm run verify` to check all required files and icons are present.
 
+**Issue**: "Could not load icon" error when loading extension in Chrome
+**Solution**: This means the icon files are corrupted or invalid. Regenerate them:
+```bash
+npm install sharp --save-dev  # If not already installed
+npm run icons                 # Regenerate fresh icons
+npm run build:simple          # Rebuild extension
+```
+
 ## 🤝 Contributing
 
 We welcome contributions from the community! Whether it's bug fixes, feature enhancements, or documentation improvements, your help is appreciated.
