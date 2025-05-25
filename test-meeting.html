@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Meeting Platform - CandidAI Testing</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .meeting-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .video-area {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .main-video {
+            background: #000;
+            border-radius: 8px;
+            height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+        .participants {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .participant {
+            background: #333;
+            border-radius: 8px;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+        }
+        .chat-area {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 15px;
+            height: 200px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        .chat-message {
+            margin-bottom: 10px;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+            border-left: 3px solid #007bff;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        .control-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .control-btn.mute { background: #dc3545; color: white; }
+        .control-btn.video { background: #28a745; color: white; }
+        .control-btn.share { background: #007bff; color: white; }
+        .control-btn.end { background: #6c757d; color: white; }
+        .control-btn:hover { opacity: 0.8; }
+        .interview-questions {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 8px;
+        }
+        .question {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .question:hover {
+            background: #f0f0f0;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #28a745;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="meeting-container">
+        <div class="header">
+            <h1>Interview Session - Software Engineer Position</h1>
+            <div>
+                <span class="status-indicator"></span>
+                <span>Recording: Active</span>
+            </div>
+        </div>
+
+        <div class="video-area">
+            <div class="main-video">
+                <div>Main Video Feed - Interviewer</div>
+            </div>
+            <div class="participants">
+                <div class="participant">Candidate Camera</div>
+                <div class="participant">Screen Share</div>
+                <div class="participant">Whiteboard</div>
+            </div>
+        </div>
+
+        <div class="chat-area" id="chatArea">
+            <div class="chat-message">
+                <strong>Interviewer:</strong> Welcome! Let's start with some technical questions.
+            </div>
+            <div class="chat-message">
+                <strong>System:</strong> CandidAI is ready to assist with suggestions.
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="control-btn mute" onclick="toggleMute()">🎤 Mute</button>
+            <button class="control-btn video" onclick="toggleVideo()">📹 Video</button>
+            <button class="control-btn share" onclick="shareScreen()">🖥️ Share</button>
+            <button class="control-btn end" onclick="endMeeting()">📞 End</button>
+        </div>
+
+        <div class="interview-questions">
+            <h3>Sample Interview Questions (Click to simulate)</h3>
+            <div class="question" onclick="simulateQuestion(this)">
+                "Tell me about your experience with JavaScript and React?"
+            </div>
+            <div class="question" onclick="simulateQuestion(this)">
+                "How would you optimize a slow-loading web application?"
+            </div>
+            <div class="question" onclick="simulateQuestion(this)">
+                "Describe your approach to debugging complex issues?"
+            </div>
+            <div class="question" onclick="simulateQuestion(this)">
+                "What's your experience with TypeScript and modern build tools?"
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simulate meeting functionality
+        let isMuted = false;
+        let isVideoOn = true;
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            const btn = document.querySelector('.control-btn.mute');
+            btn.textContent = isMuted ? '🔇 Unmute' : '🎤 Mute';
+            btn.style.background = isMuted ? '#dc3545' : '#28a745';
+        }
+
+        function toggleVideo() {
+            isVideoOn = !isVideoOn;
+            const btn = document.querySelector('.control-btn.video');
+            btn.textContent = isVideoOn ? '📹 Video' : '📹 Start Video';
+            btn.style.background = isVideoOn ? '#28a745' : '#dc3545';
+        }
+
+        function shareScreen() {
+            addChatMessage('System', 'Screen sharing started');
+        }
+
+        function endMeeting() {
+            addChatMessage('System', 'Meeting ended');
+        }
+
+        function simulateQuestion(element) {
+            const question = element.textContent.trim();
+            addChatMessage('Interviewer', question);
+            
+            // Simulate CandidAI response after a delay
+            setTimeout(() => {
+                const suggestions = [
+                    "Consider mentioning your recent project experience",
+                    "Highlight specific technologies you've used",
+                    "Provide concrete examples with metrics",
+                    "Discuss challenges you've overcome"
+                ];
+                const randomSuggestion = suggestions[Math.floor(Math.random() * suggestions.length)];
+                addChatMessage('CandidAI', `💡 Suggestion: ${randomSuggestion}`);
+            }, 2000);
+        }
+
+        function addChatMessage(sender, message) {
+            const chatArea = document.getElementById('chatArea');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'chat-message';
+            messageDiv.innerHTML = `<strong>${sender}:</strong> ${message}`;
+            chatArea.appendChild(messageDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        // Simulate periodic activity
+        setInterval(() => {
+            const activities = [
+                'Participant joined',
+                'Screen share updated',
+                'Audio quality optimized',
+                'Connection stable'
+            ];
+            const activity = activities[Math.floor(Math.random() * activities.length)];
+            if (Math.random() > 0.7) { // 30% chance
+                addChatMessage('System', activity);
+            }
+        }, 10000);
+
+        // Notify that the page is ready for extension testing
+        console.log('Test meeting platform loaded - Ready for CandidAI extension testing');
+        
+        // Dispatch a custom event that the extension can listen for
+        window.dispatchEvent(new CustomEvent('meetingPlatformReady', {
+            detail: {
+                platform: 'test-meeting',
+                type: 'interview',
+                participants: 2,
+                features: ['video', 'audio', 'chat', 'screen-share']
+            }
+        }));
+    </script>
+</body>
+</html> 

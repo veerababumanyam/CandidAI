@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CandidAI Extension Test Page</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .extension-info {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .test-results {
+            margin-top: 20px;
+        }
+        .test-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        .test-status {
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .test-status.pass {
+            background: #28a745;
+            color: white;
+        }
+        .test-status.fail {
+            background: #dc3545;
+            color: white;
+        }
+        .test-status.pending {
+            background: #ffc107;
+            color: black;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 CandidAI Extension Test Suite</h1>
+    
+    <div class="extension-info">
+        <h3>Extension Information</h3>
+        <p><strong>Name:</strong> CandidAI - Interview Assistant</p>
+        <p><strong>Version:</strong> 1.0.0</p>
+        <p><strong>Purpose:</strong> AI-powered real-time interview assistance</p>
+        <p><strong>Test URL:</strong> <span id="current-url"></span></p>
+    </div>
+
+    <div class="test-section">
+        <h2>🔧 Extension Installation Test</h2>
+        <p>This section tests if the CandidAI extension is properly installed and accessible.</p>
+        <button class="test-button" onclick="testExtensionInstallation()">Test Extension Installation</button>
+        <div id="installation-status" class="status info">Click the button above to test extension installation</div>
+    </div>
+
+    <div class="test-section">
+        <h2>📱 Side Panel Test</h2>
+        <p>Test the side panel functionality and navigation.</p>
+        <button class="test-button" onclick="testSidePanel()">Open Side Panel</button>
+        <button class="test-button" onclick="testTabNavigation()">Test Tab Navigation</button>
+        <div id="sidepanel-status" class="status info">Click buttons above to test side panel functionality</div>
+    </div>
+
+    <div class="test-section">
+        <h2>⚙️ Settings Test</h2>
+        <p>Test the settings page and API key configuration.</p>
+        <button class="test-button" onclick="testSettingsPage()">Open Settings Page</button>
+        <button class="test-button" onclick="testQuickSettings()">Test Quick Settings</button>
+        <div id="settings-status" class="status info">Click buttons above to test settings functionality</div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔗 LLM Connection Test</h2>
+        <p>Test the connection to various LLM providers.</p>
+        <button class="test-button" onclick="testOpenAIConnection()">Test OpenAI</button>
+        <button class="test-button" onclick="testAnthropicConnection()">Test Anthropic</button>
+        <button class="test-button" onclick="testGeminiConnection()">Test Gemini</button>
+        <div id="llm-status" class="status info">Click buttons above to test LLM connections</div>
+    </div>
+
+    <div class="test-section">
+        <h2>🎯 Platform Detection Test</h2>
+        <p>Test platform detection for different meeting platforms.</p>
+        <button class="test-button" onclick="simulateGoogleMeet()">Simulate Google Meet</button>
+        <button class="test-button" onclick="simulateZoom()">Simulate Zoom</button>
+        <button class="test-button" onclick="simulateTeams()">Simulate Teams</button>
+        <div id="platform-status" class="status info">Click buttons above to test platform detection</div>
+    </div>
+
+    <div class="test-results">
+        <h2>📊 Test Results</h2>
+        <div id="test-results-container">
+            <div class="test-item">
+                <span>Extension Installation</span>
+                <span class="test-status pending" id="test-installation">PENDING</span>
+            </div>
+            <div class="test-item">
+                <span>Side Panel Functionality</span>
+                <span class="test-status pending" id="test-sidepanel">PENDING</span>
+            </div>
+            <div class="test-item">
+                <span>Tab Navigation</span>
+                <span class="test-status pending" id="test-navigation">PENDING</span>
+            </div>
+            <div class="test-item">
+                <span>Settings Page</span>
+                <span class="test-status pending" id="test-settings">PENDING</span>
+            </div>
+            <div class="test-item">
+                <span>LLM Connections</span>
+                <span class="test-status pending" id="test-llm">PENDING</span>
+            </div>
+            <div class="test-item">
+                <span>Platform Detection</span>
+                <span class="test-status pending" id="test-platform">PENDING</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Set current URL
+        document.getElementById('current-url').textContent = window.location.href;
+
+        // Test functions
+        async function testExtensionInstallation() {
+            const statusEl = document.getElementById('installation-status');
+            const testEl = document.getElementById('test-installation');
+            
+            try {
+                if (typeof chrome !== 'undefined' && chrome.runtime) {
+                    statusEl.className = 'status success';
+                    statusEl.textContent = '✅ Chrome extension API is available';
+                    testEl.className = 'test-status pass';
+                    testEl.textContent = 'PASS';
+                    
+                    // Try to communicate with the extension
+                    chrome.runtime.sendMessage('candidai-extension-id', {command: 'ping'}, (response) => {
+                        if (chrome.runtime.lastError) {
+                            statusEl.className = 'status error';
+                            statusEl.textContent = '❌ Extension not installed or not responding: ' + chrome.runtime.lastError.message;
+                            testEl.className = 'test-status fail';
+                            testEl.textContent = 'FAIL';
+                        } else {
+                            statusEl.className = 'status success';
+                            statusEl.textContent = '✅ Extension is installed and responding';
+                        }
+                    });
+                } else {
+                    statusEl.className = 'status error';
+                    statusEl.textContent = '❌ Chrome extension API not available. Please load this page in Chrome with the extension installed.';
+                    testEl.className = 'test-status fail';
+                    testEl.textContent = 'FAIL';
+                }
+            } catch (error) {
+                statusEl.className = 'status error';
+                statusEl.textContent = '❌ Error testing extension: ' + error.message;
+                testEl.className = 'test-status fail';
+                testEl.textContent = 'FAIL';
+            }
+        }
+
+        async function testSidePanel() {
+            const statusEl = document.getElementById('sidepanel-status');
+            const testEl = document.getElementById('test-sidepanel');
+            
+            try {
+                if (typeof chrome !== 'undefined' && chrome.sidePanel) {
+                    await chrome.sidePanel.open({windowId: chrome.windows.WINDOW_ID_CURRENT});
+                    statusEl.className = 'status success';
+                    statusEl.textContent = '✅ Side panel opened successfully';
+                    testEl.className = 'test-status pass';
+                    testEl.textContent = 'PASS';
+                } else {
+                    statusEl.className = 'status error';
+                    statusEl.textContent = '❌ Side panel API not available';
+                    testEl.className = 'test-status fail';
+                    testEl.textContent = 'FAIL';
+                }
+            } catch (error) {
+                statusEl.className = 'status error';
+                statusEl.textContent = '❌ Error opening side panel: ' + error.message;
+                testEl.className = 'test-status fail';
+                testEl.textContent = 'FAIL';
+            }
+        }
+
+        async function testTabNavigation() {
+            const statusEl = document.getElementById('sidepanel-status');
+            const testEl = document.getElementById('test-navigation');
+            
+            // This would need to be tested within the side panel context
+            statusEl.className = 'status info';
+            statusEl.textContent = '📝 Tab navigation test requires manual verification in the side panel';
+            testEl.className = 'test-status pending';
+            testEl.textContent = 'MANUAL';
+        }
+
+        async function testSettingsPage() {
+            const statusEl = document.getElementById('settings-status');
+            const testEl = document.getElementById('test-settings');
+            
+            try {
+                if (typeof chrome !== 'undefined' && chrome.runtime) {
+                    chrome.runtime.openOptionsPage();
+                    statusEl.className = 'status success';
+                    statusEl.textContent = '✅ Settings page opened successfully';
+                    testEl.className = 'test-status pass';
+                    testEl.textContent = 'PASS';
+                } else {
+                    statusEl.className = 'status error';
+                    statusEl.textContent = '❌ Chrome runtime API not available';
+                    testEl.className = 'test-status fail';
+                    testEl.textContent = 'FAIL';
+                }
+            } catch (error) {
+                statusEl.className = 'status error';
+                statusEl.textContent = '❌ Error opening settings: ' + error.message;
+                testEl.className = 'test-status fail';
+                testEl.textContent = 'FAIL';
+            }
+        }
+
+        async function testQuickSettings() {
+            const statusEl = document.getElementById('settings-status');
+            
+            statusEl.className = 'status info';
+            statusEl.textContent = '📝 Quick settings test requires manual verification in the side panel';
+        }
+
+        async function testOpenAIConnection() {
+            await testLLMConnection('OpenAI', 'openai');
+        }
+
+        async function testAnthropicConnection() {
+            await testLLMConnection('Anthropic', 'anthropic');
+        }
+
+        async function testGeminiConnection() {
+            await testLLMConnection('Gemini', 'gemini');
+        }
+
+        async function testLLMConnection(providerName, providerId) {
+            const statusEl = document.getElementById('llm-status');
+            const testEl = document.getElementById('test-llm');
+            
+            try {
+                if (typeof chrome !== 'undefined' && chrome.runtime) {
+                    chrome.runtime.sendMessage({
+                        command: 'TEST_LLM_CONNECTION',
+                        provider: providerId
+                    }, (response) => {
+                        if (chrome.runtime.lastError) {
+                            statusEl.className = 'status error';
+                            statusEl.textContent = `❌ ${providerName} connection test failed: ${chrome.runtime.lastError.message}`;
+                            testEl.className = 'test-status fail';
+                            testEl.textContent = 'FAIL';
+                        } else if (response && response.success) {
+                            statusEl.className = 'status success';
+                            statusEl.textContent = `✅ ${providerName} connection successful`;
+                            testEl.className = 'test-status pass';
+                            testEl.textContent = 'PASS';
+                        } else {
+                            statusEl.className = 'status error';
+                            statusEl.textContent = `❌ ${providerName} connection failed: ${response?.error || 'Unknown error'}`;
+                            testEl.className = 'test-status fail';
+                            testEl.textContent = 'FAIL';
+                        }
+                    });
+                } else {
+                    statusEl.className = 'status error';
+                    statusEl.textContent = '❌ Chrome runtime API not available';
+                    testEl.className = 'test-status fail';
+                    testEl.textContent = 'FAIL';
+                }
+            } catch (error) {
+                statusEl.className = 'status error';
+                statusEl.textContent = `❌ Error testing ${providerName}: ${error.message}`;
+                testEl.className = 'test-status fail';
+                testEl.textContent = 'FAIL';
+            }
+        }
+
+        async function simulateGoogleMeet() {
+            await testPlatformDetection('Google Meet', 'https://meet.google.com/abc-defg-hij');
+        }
+
+        async function simulateZoom() {
+            await testPlatformDetection('Zoom', 'https://zoom.us/j/1234567890');
+        }
+
+        async function simulateTeams() {
+            await testPlatformDetection('Teams', 'https://teams.microsoft.com/l/meetup-join/...');
+        }
+
+        async function testPlatformDetection(platformName, testUrl) {
+            const statusEl = document.getElementById('platform-status');
+            const testEl = document.getElementById('test-platform');
+            
+            try {
+                if (typeof chrome !== 'undefined' && chrome.runtime) {
+                    chrome.runtime.sendMessage({
+                        command: 'TEST_PLATFORM_DETECTION',
+                        url: testUrl
+                    }, (response) => {
+                        if (chrome.runtime.lastError) {
+                            statusEl.className = 'status error';
+                            statusEl.textContent = `❌ ${platformName} detection failed: ${chrome.runtime.lastError.message}`;
+                            testEl.className = 'test-status fail';
+                            testEl.textContent = 'FAIL';
+                        } else if (response && response.platform) {
+                            statusEl.className = 'status success';
+                            statusEl.textContent = `✅ ${platformName} detected as: ${response.platform}`;
+                            testEl.className = 'test-status pass';
+                            testEl.textContent = 'PASS';
+                        } else {
+                            statusEl.className = 'status error';
+                            statusEl.textContent = `❌ ${platformName} detection failed`;
+                            testEl.className = 'test-status fail';
+                            testEl.textContent = 'FAIL';
+                        }
+                    });
+                } else {
+                    statusEl.className = 'status error';
+                    statusEl.textContent = '❌ Chrome runtime API not available';
+                    testEl.className = 'test-status fail';
+                    testEl.textContent = 'FAIL';
+                }
+            } catch (error) {
+                statusEl.className = 'status error';
+                statusEl.textContent = `❌ Error testing ${platformName}: ${error.message}`;
+                testEl.className = 'test-status fail';
+                testEl.textContent = 'FAIL';
+            }
+        }
+
+        // Auto-run installation test on page load
+        window.addEventListener('load', () => {
+            setTimeout(testExtensionInstallation, 1000);
+        });
+    </script>
+</body>
+</html> 

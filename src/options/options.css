@@ -1,0 +1,880 @@
+/**
+ * CandidAI Options Page Styles
+ * Implements responsive grid layout with coral/peach design system
+ * Leverages CSS custom properties for dynamic theming
+ */
+
+/* Import design system */
+@import '../css/variables.css';
+
+/* Base layout - Default to two-column grid */
+.ca-options {
+  display: grid;
+  grid-template-areas:
+    'header header'
+    'nav    main';
+  grid-template-columns: 260px 1fr; /* Fixed sidebar, flexible main content */
+  grid-template-rows: auto 1fr; /* Header auto height, main content takes rest */
+  min-height: 100vh;
+  background-color: var(--ca-neutral-50);
+  color: var(--ca-primary-900);
+  font-family: var(--ca-font-family-sans);
+}
+
+/* Header spanning full width */
+.ca-options__header {
+  grid-area: header;
+  background: linear-gradient(135deg, var(--ca-primary-400) 0%, var(--ca-primary-500) 100%);
+  color: white;
+  padding: var(--ca-space-6) var(--ca-space-8); /* Adjusted padding */
+  box-shadow: var(--ca-shadow-lg);
+  display: flex; /* For centering brand */
+  justify-content: center; /* Center brand container */
+}
+
+.ca-options__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--ca-space-4);
+  width: 100%; /* Allow brand to take up space */
+  max-width: 1200px; /* Max width for brand content */
+  /* margin: 0 auto; /* No longer needed with flex centering on header */
+}
+
+.ca-options__logo {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--ca-radius-lg);
+  box-shadow: var(--ca-shadow-md);
+}
+
+.ca-options__title {
+  font-size: var(--ca-text-3xl);
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.025em;
+}
+
+.ca-options__subtitle {
+  font-size: var(--ca-text-base);
+  opacity: 0.9;
+  margin: var(--ca-space-1) 0 0 0;
+}
+/* Navigation sidebar */
+.ca-options__nav {
+  grid-area: nav;
+  background-color: white;
+  border-right: 1px solid var(--ca-neutral-200);
+  padding: var(--ca-space-4) 0; /* Adjusted padding */
+  overflow-y: auto;
+  display: flex; /* Added to help structure internal list */
+  flex-direction: column; /* Ensure list stacks vertically */
+}
+
+.ca-nav__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%; /* Ensure list takes full width of nav area */
+}
+
+.ca-nav__item {
+  margin-bottom: var(--ca-space-1);
+  /* No specific flex properties needed here, should behave as block */
+}
+
+.ca-nav__button {
+  box-sizing: border-box; /* Add box-sizing */
+  display: flex;
+  flex-direction: row; /* Explicitly set to row for default view */
+  align-items: center;
+  gap: var(--ca-space-3); /* Keep gap */
+  width: 100%;
+  padding: var(--ca-space-3) var(--ca-space-4); /* Adjusted padding */
+  background: none;
+  border: none;
+  border-left: 4px solid transparent; /* Slightly thicker active border */
+  color: var(--ca-neutral-700); /* Darker text for better contrast */
+  font-size: var(--ca-text-sm);
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: all 150ms var(--ca-ease-out); /* Faster transition */
+  flex-shrink: 0; /* Prevent icon from shrinking */
+  color: var(--ca-neutral-500); /* Default icon color */
+  box-sizing: border-box; /* Add box-sizing */
+}
+
+.ca-nav__button:hover {
+  background-color: var(--ca-primary-50);
+  color: var(--ca-primary-700);
+  border-left-color: var(--ca-primary-200); /* Subtle hover border */
+}
+
+.ca-nav__button--active {
+  background-color: var(--ca-primary-100); /* Slightly more distinct active bg */
+  border-left-color: var(--ca-primary-500);
+  color: var(--ca-primary-700);
+  font-weight: 600;
+}
+
+.ca-nav__icon {
+  width: 18px; /* Slightly smaller icon */
+  height: 18px; /* Slightly smaller icon */
+  stroke-width: 1.75; /* Thinner stroke for refined look */
+  flex-shrink: 0; /* Prevent icon from shrinking */
+  color: var(--ca-neutral-500); /* Default icon color */
+}
+
+.ca-nav__button:hover .ca-nav__icon,
+.ca-nav__button--active .ca-nav__icon {
+  color: var(--ca-primary-600); /* Icon color on hover/active */
+}
+
+/* Add style for the text label within the button */
+.ca-nav__label {
+  display: inline-block; /* Ensure it behaves well in flex */
+  white-space: nowrap; /* Prevent text wrapping */
+  overflow: hidden; /* Hide overflow if text is too long */
+  text-overflow: ellipsis; /* Add ellipsis for long text */
+  box-sizing: border-box; /* Add box-sizing */
+  flex-grow: 1; /* Allow label to take available space */
+}
+
+/* Main content area */
+.ca-options__content {
+  grid-area: main;
+  padding: var(--ca-space-6); /* Adjusted padding */
+  overflow-y: auto;
+  max-width: 900px; /* Slightly increased max-width */
+  margin: 0 auto; /* Center content area if viewport is very wide */
+}
+/* Section styles */
+.ca-section {
+  display: none;
+  animation: fadeIn 300ms var(--ca-ease-out);
+}
+
+.ca-section--active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ca-section__title {
+  font-size: var(--ca-text-2xl);
+  font-weight: 700;
+  color: var(--ca-primary-800);
+  margin: 0 0 var(--ca-space-3) 0;
+}
+
+.ca-section__description {
+  color: var(--ca-neutral-600);
+  margin-bottom: var(--ca-space-8);
+  line-height: 1.6;
+}
+
+.ca-subsection__title {
+  font-size: var(--ca-text-lg);
+  font-weight: 600;
+  color: var(--ca-primary-700);
+  margin: var(--ca-space-6) 0 var(--ca-space-4) 0;
+}
+
+/* Form controls */
+.ca-form-group {
+  margin-bottom: var(--ca-space-6);
+}
+
+.ca-label {
+  display: flex;
+  align-items: center;
+  gap: var(--ca-space-2);
+  font-size: var(--ca-text-sm);
+  font-weight: 600;
+  color: var(--ca-primary-800);
+  margin-bottom: var(--ca-space-2);
+}
+
+.ca-provider-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--ca-radius-sm);
+}
+/* Input controls */
+.ca-input {
+  width: 100%;
+  padding: var(--ca-space-3) var(--ca-space-4);
+  border: 2px solid var(--ca-neutral-200);
+  border-radius: var(--ca-radius-md);
+  font-size: var(--ca-text-base);
+  font-family: inherit;
+  background-color: white;
+  color: var(--ca-primary-900);
+  transition: all 200ms var(--ca-ease-out);
+}
+
+.ca-input:focus {
+  outline: none;
+  border-color: var(--ca-primary-400);
+  box-shadow: 0 0 0 3px rgba(232, 163, 150, 0.2);
+}
+
+.ca-input--password {
+  padding-right: var(--ca-space-12);
+}
+
+.ca-input-group {
+  position: relative;
+}
+
+.ca-toggle-visibility {
+  position: absolute;
+  right: var(--ca-space-2);
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Select dropdown */
+.ca-select {
+  width: 100%;
+  padding: var(--ca-space-3) var(--ca-space-4);
+  border: 2px solid var(--ca-neutral-200);
+  border-radius: var(--ca-radius-md);
+  font-size: var(--ca-text-base);
+  font-family: inherit;
+  background-color: white;
+  color: var(--ca-primary-900);
+  cursor: pointer;
+  transition: all 200ms var(--ca-ease-out);
+}
+
+.ca-select:focus {
+  outline: none;
+  border-color: var(--ca-primary-400);
+  box-shadow: 0 0 0 3px rgba(232, 163, 150, 0.2);
+}
+/* Textarea */
+.ca-textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: var(--ca-space-3) var(--ca-space-4);
+  border: 2px solid var(--ca-neutral-200);
+  border-radius: var(--ca-radius-md);
+  font-size: var(--ca-text-base);
+  font-family: inherit;
+  background-color: white;
+  color: var(--ca-primary-900);
+  resize: vertical;
+  transition: all 200ms var(--ca-ease-out);
+}
+
+.ca-textarea:focus {
+  outline: none;
+  border-color: var(--ca-primary-400);
+  box-shadow: 0 0 0 3px rgba(232, 163, 150, 0.2);
+}
+
+/* Help text */
+.ca-help-text {
+  font-size: var(--ca-text-sm);
+  color: var(--ca-neutral-600);
+  margin-top: var(--ca-space-2);
+}
+
+.ca-help-text a {
+  color: var(--ca-primary-600);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.ca-help-text a:hover {
+  text-decoration: underline;
+}
+
+/* Upload area */
+.ca-dropzone {
+  border: 2px dashed var(--ca-neutral-300);
+  border-radius: var(--ca-radius-lg);
+  padding: var(--ca-space-10);
+  text-align: center;
+  cursor: pointer;
+  transition: all 200ms var(--ca-ease-out);
+  background-color: var(--ca-neutral-50);
+}
+
+.ca-dropzone:hover {
+  border-color: var(--ca-primary-400);
+  background-color: var(--ca-primary-50);
+}
+
+.ca-dropzone--active {
+  border-color: var(--ca-primary-500);
+  background-color: var(--ca-primary-100);
+}
+.ca-dropzone__icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto var(--ca-space-4);
+  opacity: 0.5;
+  stroke-width: 1.5;
+}
+
+.ca-dropzone__text {
+  font-size: var(--ca-text-base);
+  font-weight: 600;
+  color: var(--ca-primary-700);
+  margin-bottom: var(--ca-space-2);
+}
+
+.ca-dropzone__subtext {
+  font-size: var(--ca-text-sm);
+  color: var(--ca-neutral-600);
+}
+
+/* File preview */
+.ca-file-preview {
+  display: flex;
+  align-items: center;
+  gap: var(--ca-space-4);
+  padding: var(--ca-space-4);
+  background-color: var(--ca-primary-50);
+  border: 1px solid var(--ca-primary-200);
+  border-radius: var(--ca-radius-md);
+  margin-top: var(--ca-space-4);
+}
+
+.ca-file-preview__icon {
+  font-size: 2rem;
+}
+
+.ca-file-preview__info {
+  flex: 1;
+}
+
+.ca-file-preview__name {
+  font-weight: 600;
+  color: var(--ca-primary-800);
+  margin: 0;
+}
+
+.ca-file-preview__size {
+  font-size: var(--ca-text-sm);
+  color: var(--ca-neutral-600);
+  margin: 0;
+}
+
+/* Button system */
+.ca-button-group {
+  display: flex;
+  gap: var(--ca-space-3);
+  margin-top: var(--ca-space-8);
+}
+.ca-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ca-space-2);
+  padding: var(--ca-space-3) var(--ca-space-5);
+  border: none;
+  border-radius: var(--ca-radius-md);
+  font-size: var(--ca-text-sm);
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 200ms var(--ca-ease-out);
+  position: relative;
+  overflow: hidden;
+}
+
+.ca-btn--primary {
+  background-color: var(--ca-primary-500);
+  color: white;
+}
+
+.ca-btn--primary:hover {
+  background-color: var(--ca-primary-600);
+  transform: translateY(-1px);
+  box-shadow: var(--ca-shadow-md);
+}
+
+.ca-btn--secondary {
+  background-color: white;
+  color: var(--ca-primary-700);
+  border: 2px solid var(--ca-primary-300);
+}
+
+.ca-btn--secondary:hover {
+  background-color: var(--ca-primary-50);
+  border-color: var(--ca-primary-400);
+}
+
+.ca-btn--danger {
+  background-color: var(--ca-error-500);
+  color: white;
+}
+
+.ca-btn--danger:hover {
+  background-color: var(--ca-error-600);
+}
+
+.ca-btn--icon {
+  padding: var(--ca-space-2);
+}
+
+/* Toast notifications */
+.ca-toast-container {
+  position: fixed;
+  bottom: var(--ca-space-6);
+  right: var(--ca-space-6);
+  z-index: var(--ca-z-max);
+}
+.ca-toast {
+  background-color: white;
+  border-radius: var(--ca-radius-lg);
+  box-shadow: var(--ca-shadow-lg);
+  padding: var(--ca-space-4) var(--ca-space-6);
+  margin-bottom: var(--ca-space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--ca-space-3);
+  animation: toastSlideIn 300ms var(--ca-ease-out);
+}
+
+@keyframes toastSlideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.ca-toast--success {
+  border-left: 4px solid var(--ca-success-500);
+}
+
+.ca-toast--error {
+  border-left: 4px solid var(--ca-error-500);
+}
+
+.ca-toast--info {
+  border-left: 4px solid var(--ca-info-500);
+}
+
+/* Force vertical layout for very narrow containers (like sidepanel) OR when .ca-options--compact is applied */
+.ca-options.ca-options--compact {
+  grid-template-areas:
+    'header'
+    'nav'
+    'main';
+  grid-template-columns: 1fr; /* Single column */
+  grid-template-rows: auto auto 1fr; /* Header, Nav, then Main content takes rest */
+}
+
+/* Styles for .ca-options and its children when viewport is narrow */
+@media (max-width: 767px) {
+  .ca-options {
+    /* This applies when the viewport is narrow */
+    grid-template-areas:
+      'header'
+      'nav'
+      'main';
+    grid-template-columns: 1fr; /* Single column */
+    grid-template-rows: auto auto 1fr; /* Header, Nav, then Main content takes rest */
+  }
+
+  /* Child element adjustments for narrow viewport */
+  .ca-options .ca-options__header {
+    /* More specific selector */
+    padding: var(--ca-space-3) var(--ca-space-4);
+  }
+
+  .ca-options .ca-options__brand {
+    /* More specific selector */
+    gap: var(--ca-space-2);
+  }
+
+  .ca-options .ca-options__logo {
+    /* More specific selector */
+    width: 32px;
+    height: 32px;
+  }
+
+  .ca-options .ca-options__title {
+    /* More specific selector */
+    font-size: var(--ca-text-xl);
+  }
+
+  .ca-options .ca-options__subtitle {
+    /* More specific selector */
+    font-size: var(--ca-text-sm);
+  }
+
+  .ca-options .ca-options__nav {
+    /* More specific selector */
+    border-right: none;
+    border-bottom: 1px solid var(--ca-neutral-200);
+    padding: var(--ca-space-2);
+    overflow-y: visible; /* Allow nav to expand if needed */
+  }
+
+  .ca-options .ca-nav__list {
+    /* More specific selector */
+    display: flex; /* Horizontal scroll for tabs in compact mode */
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: var(--ca-space-1);
+    padding-bottom: var(--ca-space-1); /* Space for scrollbar if it appears */
+  }
+
+  .ca-options .ca-nav__item {
+    /* More specific selector */
+    flex-shrink: 0; /* Prevent items from shrinking too much */
+  }
+
+  .ca-options .ca-nav__button {
+    /* More specific selector */
+    flex-direction: row; /* Icons and text side-by-side for horizontal scroll */
+    gap: var(--ca-space-2);
+    padding: var(--ca-space-2) var(--ca-space-3);
+    font-size: var(--ca-text-sm);
+    border-left: none;
+    border-radius: var(--ca-radius-md);
+  }
+
+  .ca-options .ca-nav__button--active {
+    /* More specific selector */
+    background-color: var(--ca-primary-500);
+    color: white;
+  }
+
+  .ca-options .ca-nav__icon {
+    /* More specific selector */
+    width: 16px;
+    height: 16px;
+  }
+
+  .ca-options .ca-options__content {
+    /* More specific selector */
+    padding: var(--ca-space-4);
+    max-width: 100%; /* Allow content to fill width */
+    margin: 0;
+  }
+
+  .ca-options .ca-section__title {
+    /* More specific selector */
+    font-size: var(--ca-text-lg);
+  }
+
+  .ca-options .ca-form-group {
+    /* More specific selector */
+    margin-bottom: var(--ca-space-3);
+  }
+}
+
+/* Overrides for children when .ca-options--compact is explicitly added by JS.
+   These ensure compact styles apply even if viewport > 767px (e.g., if embedded in a large iframe but JS deems it compact)
+   If styles are identical to media query, this might seem redundant, but ensures JS-driven state takes precedence if needed.
+*/
+.ca-options.ca-options--compact .ca-options__header {
+  padding: var(--ca-space-3) var(--ca-space-4);
+}
+.ca-options.ca-options--compact .ca-options__brand {
+  gap: var(--ca-space-2);
+}
+.ca-options.ca-options--compact .ca-options__logo {
+  width: 32px;
+  height: 32px;
+}
+.ca-options.ca-options--compact .ca-options__title {
+  font-size: var(--ca-text-xl);
+}
+.ca-options.ca-options--compact .ca-options__subtitle {
+  font-size: var(--ca-text-sm);
+}
+.ca-options.ca-options--compact .ca-options__nav {
+  border-right: none;
+  border-bottom: 1px solid var(--ca-neutral-200);
+  padding: var(--ca-space-2);
+  overflow-y: visible;
+}
+.ca-options.ca-options--compact .ca-nav__list {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: var(--ca-space-1);
+  padding-bottom: var(--ca-space-1);
+}
+.ca-options.ca-options--compact .ca-nav__item {
+  flex-shrink: 0;
+}
+.ca-options.ca-options--compact .ca-nav__button {
+  flex-direction: row;
+  gap: var(--ca-space-2);
+  padding: var(--ca-space-2) var(--ca-space-3);
+  font-size: var(--ca-text-sm);
+  border-left: none;
+  border-radius: var(--ca-radius-md);
+}
+.ca-options.ca-options--compact .ca-nav__button--active {
+  background-color: var(--ca-primary-500);
+  color: white;
+}
+.ca-options.ca-options--compact .ca-nav__icon {
+  width: 16px;
+  height: 16px;
+}
+.ca-options.ca-options--compact .ca-options__content {
+  padding: var(--ca-space-4);
+  max-width: 100%;
+  margin: 0;
+}
+.ca-options.ca-options--compact .ca-section__title {
+  font-size: var(--ca-text-lg);
+}
+.ca-options.ca-options--compact .ca-form-group {
+  margin-bottom: var(--ca-space-3);
+}
+
+/* Remove the old @media (max-width: 480px) and .ca-options--compact specific rules 
+   that were separate, as they are now combined and refined above. 
+   The JS will add/remove .ca-options--compact, and the CSS handles the rest via that class or media query.
+*/
+
+/* Additional styles for new form elements */
+.ca-checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--ca-space-3);
+  cursor: pointer;
+  margin-bottom: var(--ca-space-3);
+}
+
+.ca-checkbox input[type="checkbox"] {
+  display: none;
+}
+
+.ca-checkbox__checkmark {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--ca-neutral-300);
+  border-radius: var(--ca-radius-sm);
+  position: relative;
+  transition: all 150ms var(--ca-ease-out);
+  flex-shrink: 0;
+}
+
+.ca-checkbox input[type="checkbox"]:checked + .ca-checkbox__checkmark {
+  background-color: var(--ca-primary-500);
+  border-color: var(--ca-primary-500);
+}
+
+.ca-checkbox input[type="checkbox"]:checked + .ca-checkbox__checkmark::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 5px;
+  width: 4px;
+  height: 8px;
+  border: 2px solid white;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
+}
+
+.ca-checkbox__label {
+  font-size: var(--ca-text-sm);
+  color: var(--ca-neutral-700);
+}
+
+.ca-checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ca-space-1);
+}
+
+/* Range input styles */
+.ca-range-group {
+  display: flex;
+  align-items: center;
+  gap: var(--ca-space-3);
+}
+
+.ca-range {
+  flex: 1;
+  height: 6px;
+  border-radius: var(--ca-radius-full);
+  background: var(--ca-neutral-200);
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.ca-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--ca-primary-500);
+  cursor: pointer;
+  box-shadow: var(--ca-shadow-md);
+  transition: all 150ms var(--ca-ease-out);
+}
+
+.ca-range::-webkit-slider-thumb:hover {
+  background: var(--ca-primary-600);
+  transform: scale(1.1);
+}
+
+.ca-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--ca-primary-500);
+  cursor: pointer;
+  border: none;
+  box-shadow: var(--ca-shadow-md);
+  transition: all 150ms var(--ca-ease-out);
+}
+
+.ca-range-value {
+  font-size: var(--ca-text-sm);
+  font-weight: 600;
+  color: var(--ca-primary-700);
+  min-width: 3em;
+  text-align: right;
+}
+
+.ca-range-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--ca-space-2);
+  font-size: var(--ca-text-xs);
+  color: var(--ca-neutral-500);
+}
+
+/* Model grid styles */
+.ca-model-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--ca-space-4);
+}
+
+.ca-model-option {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ca-space-2);
+}
+
+/* Fallback order styles */
+.ca-sortable-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ca-space-2);
+}
+
+.ca-fallback-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--ca-space-3);
+  background: var(--ca-neutral-50);
+  border: 1px solid var(--ca-neutral-200);
+  border-radius: var(--ca-radius-md);
+  cursor: move;
+  transition: all 150ms var(--ca-ease-out);
+}
+
+.ca-fallback-item:hover {
+  background: var(--ca-neutral-100);
+  border-color: var(--ca-primary-300);
+}
+
+.ca-provider-name {
+  font-weight: 500;
+  color: var(--ca-neutral-700);
+}
+
+.ca-drag-handle {
+  color: var(--ca-neutral-400);
+  font-size: var(--ca-text-lg);
+  cursor: grab;
+}
+
+.ca-drag-handle:active {
+  cursor: grabbing;
+}
+
+/* Stats grid for performance section */
+.ca-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--ca-space-4);
+  margin-bottom: var(--ca-space-6);
+}
+
+.ca-stat-card {
+  background: white;
+  padding: var(--ca-space-4);
+  border-radius: var(--ca-radius-lg);
+  box-shadow: var(--ca-shadow-sm);
+  border: 1px solid var(--ca-neutral-200);
+  text-align: center;
+}
+
+.ca-stat-title {
+  font-size: var(--ca-text-sm);
+  font-weight: 500;
+  color: var(--ca-neutral-600);
+  margin: 0 0 var(--ca-space-2) 0;
+}
+
+.ca-stat-value {
+  font-size: var(--ca-text-2xl);
+  font-weight: 700;
+  color: var(--ca-primary-700);
+  margin: 0;
+}
+
+/* Integration status styles */
+.ca-integration-status {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ca-space-4);
+  margin-bottom: var(--ca-space-6);
+}
+
+.ca-integration-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--ca-space-4);
+  background: white;
+  border: 1px solid var(--ca-neutral-200);
+  border-radius: var(--ca-radius-lg);
+  box-shadow: var(--ca-shadow-sm);
+}
+
+.ca-integration-info h3 {
+  font-size: var(--ca-text-lg);
+  font-weight: 600;
+  color: var(--ca-neutral-800);
+  margin: 0 0 var(--ca-space-1) 0;
+}
+
+.ca-integration-status-text {
+  font-size: var(--ca-text-sm);
+  color: var(--ca-neutral-600);
+  margin: 0;
+}
