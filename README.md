@@ -166,11 +166,17 @@ npm run icons
 # Development build with watch mode
 npm run dev
 
-# Production build (includes icon generation) - Full validation
+# Production build (full validation) - preserves existing dist folder
 npm run build
 
-# Simple production build (skips type checking) - For quick builds
+# Simple production build (recommended) - skips type checking
 npm run build:simple
+
+# Clean build (deletes and rebuilds dist folder)
+npm run build:clean
+
+# Force rebuild (completely removes dist and rebuilds)
+npm run build:force
 
 # Run linters and formatters
 npm run lint
@@ -184,34 +190,59 @@ npm run package
 
 ### Building the Extension
 
-If you encounter TypeScript errors when running `npm run build`, you can use the simple build command:
+**✅ Recommended approach for downloaded repositories:**
 
 ```bash
-# Quick build without type checking (recommended for initial setup)
-npm run build:simple
+# After cloning from GitHub (dist folder already included)
+npm install
+# No need to run build - extension is ready to load!
 ```
 
-This creates the `dist/` folder required for loading the extension in Chrome. The full build with type checking is available with `npm run build` for development.
+**If you need to rebuild or modify code:**
+
+```bash
+# Simple rebuild (preserves icons and working files)
+npm run build:simple
+
+# Or full rebuild with validation
+npm run build
+```
+
+**If you encounter build issues:**
+
+```bash
+# Force clean rebuild (deletes everything and rebuilds)
+npm run build:force
+```
 
 ### Loading the Extension in Chrome
 
-1. Run `npm install` to install dependencies
-2. Run `npm run build:simple` to create the dist folder
+**For Downloaded Repository:**
+1. Clone/download the repository from GitHub
+2. Run `npm install` (optional - only needed for development)
 3. Open Chrome and go to `chrome://extensions`
 4. Enable "Developer mode"
 5. Click "Load unpacked"
 6. Select the `dist/` folder from your project directory
 
-### Common Issues
+**For Development:**
+1. Run `npm install` to install dependencies
+2. Run `npm run build:simple` if you need to rebuild
+3. Load the `dist/` folder in Chrome as above
 
-**Issue**: `dist` folder not found after cloning
-**Solution**: Run `npm run build:simple` to create it
+### Common Issues & Solutions
 
-**Issue**: TypeScript compilation errors
-**Solution**: Use `npm run build:simple` for quick builds, or fix type issues for full validation
+**Issue**: `icon16.png missing` when loading extension
+**Solution**: The dist folder is already included in the repository with all icons. Just load the dist folder directly without building.
 
-**Issue**: Extension not loading
-**Solution**: Ensure you're selecting the `dist/` folder, not the root project folder
+**Issue**: `dist` folder deleted after running npm run build
+**Solution**: We fixed this! Now `npm run build` preserves the existing dist folder. Use `npm run build:clean` if you specifically want to clean first.
+
+**Issue**: TypeScript compilation errors during build
+**Solution**: Use `npm run build:simple` for quick builds without type checking, or `npm run build:force` for a complete rebuild.
+
+**Issue**: Extension not loading after git clone
+**Solution**: The extension should work immediately after cloning. Just load the existing `dist/` folder - no build required!
 
 ## 🤝 Contributing
 
