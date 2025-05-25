@@ -1,6 +1,6 @@
 {
   "name": "candidai-chrome-extension",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "AI-powered meeting assistant Chrome extension with advanced transcription and intelligent suggestions",
   "author": "Veera Babu Manyam <veera@sawas.org>",
   "license": "Apache-2.0",
