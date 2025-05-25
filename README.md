@@ -56,9 +56,8 @@ CandidAI transforms from a specialized tool into a versatile assistant, ready to
 ### Development Installation
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/candidai-chrome-extension.git
-   cd candidai-chrome-extension
-   ```
+   git clone https://github.com/veerababumanyam/CandidAI.git
+   cd CandidAI
 
 2. Install dependencies:
    ```bash
