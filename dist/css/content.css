@@ -1,0 +1,60 @@
+/**
+ * CandidAI Content Script Styles
+ * Minimal styles for injected UI elements
+ * Scoped to avoid conflicts with host pages
+ */
+
+/* Scoped styles for CandidAI injected elements */
+.candidai-injected {
+  all: initial;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+}
+
+.candidai-badge {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #e8a396;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 9999;
+  cursor: pointer;
+  transition: all 200ms ease-out;
+}
+
+.candidai-badge:hover {
+  background-color: #d36552;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.candidai-indicator {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 12px;
+  height: 12px;
+  background-color: #22c55e;
+  border-radius: 50%;
+  border: 2px solid white;
+  animation: candidai-pulse 2s ease-in-out infinite;
+}
+
+@keyframes candidai-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(0.8);
+  }
+}

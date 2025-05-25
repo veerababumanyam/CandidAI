@@ -1,0 +1,220 @@
+/**
+ * CandidAI Global Styles - Main CSS
+ * Implements CSS reset, normalization, and shared components
+ * Leverages design system variables for consistency
+ */
+
+/* Import design system */
+@import 'variables.css';
+
+/* CSS Reset and Normalization */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--ca-font-family-sans);
+  font-size: var(--ca-text-base);
+  line-height: 1.5;
+  color: var(--ca-primary-900);
+  background-color: var(--ca-neutral-50);
+}
+
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+input,
+button,
+textarea,
+select {
+  font: inherit;
+}
+
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  overflow-wrap: break-word;
+}
+
+a {
+  color: var(--ca-primary-600);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Focus styles for accessibility */
+:focus {
+  outline: 2px solid var(--ca-primary-400);
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ca-primary-400);
+  outline-offset: 2px;
+}
+/* Typography utilities */
+.ca-text-xs {
+  font-size: var(--ca-text-xs);
+}
+.ca-text-sm {
+  font-size: var(--ca-text-sm);
+}
+.ca-text-base {
+  font-size: var(--ca-text-base);
+}
+.ca-text-lg {
+  font-size: var(--ca-text-lg);
+}
+.ca-text-xl {
+  font-size: var(--ca-text-xl);
+}
+.ca-text-2xl {
+  font-size: var(--ca-text-2xl);
+}
+.ca-text-3xl {
+  font-size: var(--ca-text-3xl);
+}
+
+.ca-font-light {
+  font-weight: 300;
+}
+.ca-font-normal {
+  font-weight: 400;
+}
+.ca-font-semibold {
+  font-weight: 600;
+}
+.ca-font-bold {
+  font-weight: 700;
+}
+
+/* Color utilities */
+.ca-text-primary {
+  color: var(--ca-primary-600);
+}
+.ca-text-secondary {
+  color: var(--ca-neutral-600);
+}
+.ca-text-success {
+  color: var(--ca-success-600);
+}
+.ca-text-error {
+  color: var(--ca-error-600);
+}
+.ca-text-warning {
+  color: var(--ca-warning-600);
+}
+
+.ca-bg-primary {
+  background-color: var(--ca-primary-100);
+}
+.ca-bg-secondary {
+  background-color: var(--ca-neutral-100);
+}
+.ca-bg-success {
+  background-color: var(--ca-success-100);
+}
+.ca-bg-error {
+  background-color: var(--ca-error-100);
+}
+.ca-bg-warning {
+  background-color: var(--ca-warning-100);
+}
+
+/* Spacing utilities */
+.ca-p-1 {
+  padding: var(--ca-space-1);
+}
+.ca-p-2 {
+  padding: var(--ca-space-2);
+}
+.ca-p-3 {
+  padding: var(--ca-space-3);
+}
+.ca-p-4 {
+  padding: var(--ca-space-4);
+}
+.ca-p-5 {
+  padding: var(--ca-space-5);
+}
+.ca-p-6 {
+  padding: var(--ca-space-6);
+}
+
+.ca-m-1 {
+  margin: var(--ca-space-1);
+}
+.ca-m-2 {
+  margin: var(--ca-space-2);
+}
+.ca-m-3 {
+  margin: var(--ca-space-3);
+}
+.ca-m-4 {
+  margin: var(--ca-space-4);
+}
+.ca-m-5 {
+  margin: var(--ca-space-5);
+}
+.ca-m-6 {
+  margin: var(--ca-space-6);
+}
+
+/* Flexbox utilities */
+.ca-flex {
+  display: flex;
+}
+.ca-flex-col {
+  flex-direction: column;
+}
+.ca-items-center {
+  align-items: center;
+}
+.ca-justify-center {
+  justify-content: center;
+}
+.ca-justify-between {
+  justify-content: space-between;
+}
+.ca-gap-1 {
+  gap: var(--ca-space-1);
+}
+.ca-gap-2 {
+  gap: var(--ca-space-2);
+}
+.ca-gap-3 {
+  gap: var(--ca-space-3);
+}
+.ca-gap-4 {
+  gap: var(--ca-space-4);
+}

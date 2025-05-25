@@ -166,8 +166,11 @@ npm run icons
 # Development build with watch mode
 npm run dev
 
-# Production build (includes icon generation)
+# Production build (includes icon generation) - Full validation
 npm run build
+
+# Simple production build (skips type checking) - For quick builds
+npm run build:simple
 
 # Run linters and formatters
 npm run lint
@@ -176,6 +179,39 @@ npm run format
 # Create a distributable ZIP file
 npm run package
 ```
+
+## 🔧 Development & Build Troubleshooting
+
+### Building the Extension
+
+If you encounter TypeScript errors when running `npm run build`, you can use the simple build command:
+
+```bash
+# Quick build without type checking (recommended for initial setup)
+npm run build:simple
+```
+
+This creates the `dist/` folder required for loading the extension in Chrome. The full build with type checking is available with `npm run build` for development.
+
+### Loading the Extension in Chrome
+
+1. Run `npm install` to install dependencies
+2. Run `npm run build:simple` to create the dist folder
+3. Open Chrome and go to `chrome://extensions`
+4. Enable "Developer mode"
+5. Click "Load unpacked"
+6. Select the `dist/` folder from your project directory
+
+### Common Issues
+
+**Issue**: `dist` folder not found after cloning
+**Solution**: Run `npm run build:simple` to create it
+
+**Issue**: TypeScript compilation errors
+**Solution**: Use `npm run build:simple` for quick builds, or fix type issues for full validation
+
+**Issue**: Extension not loading
+**Solution**: Ensure you're selecting the `dist/` folder, not the root project folder
 
 ## 🤝 Contributing
 

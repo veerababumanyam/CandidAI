@@ -33,6 +33,7 @@ export interface MessageRequest {
   target?: string;
   sessionId?: string;
   timestamp?: number;
+  data?: unknown;
 }
 
 export interface MessageResponse {
@@ -44,12 +45,127 @@ export interface MessageResponse {
 }
 
 // =============================================================================
+// DOCUMENT TYPES
+// =============================================================================
+
+export type DocumentType = 'resume' | 'cover_letter' | 'portfolio' | 'reference' | 'presentation' | 'proposal' | 'case_study' | 'pricing' | 'other';
+
+export type PriorityLevel = 'low' | 'medium' | 'high' | 'urgent' | 'critical';
+
+export interface DocumentContent {
+  text: string;
+  metadata: DocumentMetadata;
+  chunks: DocumentChunk[];
+  entities: ExtractedEntity[];
+  keywords: string[];
+  summary: string;
+  processedAt: Date;
+}
+
+export interface DocumentChunk {
+  id: string;
+  content: string;
+  startIndex: number;
+  endIndex: number;
+  metadata: Record<string, unknown>;
+}
+
+export interface ExtractedEntity {
+  text: string;
+  type: 'person' | 'organization' | 'technology' | 'concept' | 'skill' | 'location';
+  confidence: number;
+  startIndex: number;
+  endIndex: number;
+  context: string;
+}
+
+export type ProcessingStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
+
+// =============================================================================
+// CONTEXT AND SUGGESTION TYPES
+// =============================================================================
+
+export interface SuggestionContext {
+  sessionId: string;
+  callType: CallType;
+  tone: ToneType;
+  relevantDocuments: DocumentReference[];
+  currentTopic: string;
+  conversationHistory: string[];
+  participants: Participant[];
+  meetingPhase: string;
+}
+
+export interface ContextUpdate {
+  sessionId: string;
+  transcription: TranscriptionData;
+  timestamp: Date;
+  metadata?: Record<string, unknown>;
+}
+
+// =============================================================================
+// PERFORMANCE AND REPORTING TYPES
+// =============================================================================
+
+export interface PerformanceReport {
+  sessionId: string;
+  duration: number;
+  metrics: PerformanceMetrics;
+  events: PerformanceEvent[];
+  interviews: Interview[];
+  generatedAt: Date;
+}
+
+export interface SuggestionEntry {
+  id: string;
+  content: string;
+  confidence: number;
+  relevantDocuments: string[];
+  timestamp: Date;
+  used: boolean;
+  feedback?: 'positive' | 'negative' | 'neutral';
+}
+
+export interface Interview {
+  sessionId: string;
+  metadata: SessionMetadata;
+  transcriptions: InterviewTranscription[];
+  questions: InterviewQuestion[];
+  suggestions: SuggestionEntry[];
+  performance: InterviewPerformance;
+  startTime: Date;
+  endTime?: Date;
+  duration?: number;
+}
+
+export interface InterviewTranscription extends TranscriptionData {
+  isQuestion?: boolean;
+}
+
+export interface InterviewQuestion {
+  id: string;
+  text: string;
+  timestamp: number;
+  answered: boolean;
+  response?: string;
+  confidence?: number;
+}
+
+export interface InterviewPerformance {
+  questionsAnswered: number;
+  averageResponseTime: number;
+  confidenceScore: number;
+  keyPoints: string[];
+  improvements: string[];
+}
+
+// =============================================================================
 // SESSION AND METADATA TYPES
 // =============================================================================
 
 export interface SessionMetadata {
   sessionId: string;
-  callType: 'interview' | 'meeting' | 'presentation' | 'training';
+  callType: CallType;
   participantCount: number;
   documentCount: number;
   duration: number;
@@ -61,12 +177,14 @@ export interface SessionMetadata {
   tabId?: number;
   initiatedTs: number;
   uiConnected: boolean;
+  company?: string;
+  position?: string;
 }
 
 export interface InterviewContext {
   sessionId: string;
-  callType: 'interview' | 'meeting' | 'presentation' | 'training';
-  tone: 'professional' | 'casual' | 'formal' | 'friendly';
+  callType: CallType;
+  tone: ToneType;
   documents: DocumentReference[];
   participants: Participant[];
   conversation: ConversationEntry[];
@@ -137,6 +255,7 @@ export interface TranscriptionData {
   language?: string;
   isInterim: boolean;
   alternatives?: string[];
+  isQuestion?: boolean;
 }
 
 export interface TranscriptResult {
@@ -160,7 +279,7 @@ export interface TranscriptBuffer {
 
 export interface ContextualResponse {
   content: string;
-  tone: 'professional' | 'casual' | 'formal' | 'friendly';
+  tone: ToneType;
   confidence: number;
   relevantDocuments: DocumentReference[];
   supportingPoints: string[];
@@ -169,11 +288,12 @@ export interface ContextualResponse {
 }
 
 export interface ResponseMetadata {
-  callType: 'interview' | 'meeting' | 'presentation' | 'training';
+  callType: CallType;
   responseType: 'answer' | 'suggestion' | 'clarification' | 'summary';
-  priority: 'low' | 'medium' | 'high' | 'urgent';
+  priority: PriorityLevel;
   timing: 'immediate' | 'delayed' | 'scheduled';
   length: 'brief' | 'detailed' | 'comprehensive';
+  formality: 'formal' | 'professional' | 'casual' | 'friendly';
 }
 
 // =============================================================================
@@ -211,6 +331,8 @@ export interface LLMProvider {
   isEnabled: boolean;
   priority: number;
   rateLimits: RateLimits;
+  generateCompletion(request: LLMRequest): Promise<LLMResponse>;
+  getModels?(): string[];
 }
 
 export interface RateLimits {
@@ -221,11 +343,16 @@ export interface RateLimits {
 
 export interface LLMRequest {
   prompt: string;
-  context?: string;
+  context?: string | SuggestionContext;
   maxTokens?: number;
   temperature?: number;
   model?: string;
   sessionId?: string;
+  messages?: Array<{ role: string; content: string }>;
+  systemMessage?: string;
+  stream?: boolean;
+  tools?: any[] | null;
+  callType?: CallType;
 }
 
 export interface LLMResponse {
@@ -234,16 +361,19 @@ export interface LLMResponse {
   model: string;
   finishReason: string;
   metadata?: Record<string, unknown>;
+  provider?: string;
+  text?: string;
 }
 
 export interface TokenUsage {
   promptTokens: number;
   completionTokens: number;
   totalTokens: number;
+  model?: string;
 }
 
 // =============================================================================
-// UI STATE TYPES
+// UI STATE AND CONFIGURATION TYPES
 // =============================================================================
 
 export interface UIState {
@@ -302,6 +432,7 @@ export interface PerformanceEvent {
   name: string;
   timestamp: number;
   data?: Record<string, unknown>;
+  type?: string;
 }
 
 // =============================================================================
@@ -313,6 +444,7 @@ export interface ExtensionError extends Error {
   context?: Record<string, unknown>;
   timestamp: Date;
   severity: 'low' | 'medium' | 'high' | 'critical';
+  sessionId?: string;
 }
 
 // =============================================================================
@@ -362,7 +494,7 @@ export interface PerformanceConfig {
 }
 
 // =============================================================================
-// SPEECH TO TEXT TYPES
+// AUDIO AND SPEECH TYPES
 // =============================================================================
 
 export interface SpeechToTextResult {
@@ -384,11 +516,12 @@ export interface AudioConfig {
 }
 
 // =============================================================================
-// UI COMPONENT TYPES
+// SPECIFIC FEATURE TYPES
 // =============================================================================
 
-export type CallType = 'interview' | 'meeting' | 'presentation' | 'training';
-export type ToneType = 'professional' | 'casual' | 'formal' | 'friendly';
+export type CallType = 'interview' | 'meeting' | 'presentation' | 'training' | 'sales_pitch' | 'sales_call' | 'client_meeting' | 'team_meeting' | 'one_on_one' | 'performance_review' | 'brainstorming';
+
+export type ToneType = 'professional' | 'casual' | 'formal' | 'friendly' | 'confident' | 'consultative' | 'persuasive' | 'empathetic' | 'analytical' | 'creative' | 'diplomatic';
 
 export interface MeetingControlsState {
   isRecording: boolean;
@@ -396,6 +529,7 @@ export interface MeetingControlsState {
   callType: string;
   tone: string;
   documentsLoaded: number;
+  aiEnabled?: boolean;
 }
 
 export interface DocumentUploadState {
@@ -403,6 +537,7 @@ export interface DocumentUploadState {
   uploadProgress: number;
   error: string | null;
   errors?: string[];
+  uploading?: boolean;
 }
 
 export interface DocumentMetadata {
@@ -412,7 +547,8 @@ export interface DocumentMetadata {
   type: string;
   format: string;
   uploadDate: Date;
-  priority: 'low' | 'medium' | 'high';
+  priority: PriorityLevel;
+  lastModified?: Date;
 }
 
 export interface MeetingContext {
@@ -422,10 +558,12 @@ export interface MeetingContext {
   participants: Participant[];
   documents: DocumentReference[];
   currentObjectives: string[];
+  callType?: CallType;
+  tone?: ToneType;
 }
 
 // =============================================================================
-// STORAGE TYPES
+// STORAGE INTERFACE TYPES
 // =============================================================================
 
 export interface StorageProvider {
@@ -445,37 +583,74 @@ export interface EncryptedStorage extends StorageProvider {
 }
 
 // =============================================================================
-// EXPORT ALL TYPES
+// CONSTANTS AND ENUMS
 // =============================================================================
 
-export * from './speech';
-export * from './platforms';
-export * from './api';
-
 export const CALL_TYPES = {
-  INTERVIEW: 'interview',
-  MEETING: 'meeting', 
-  PRESENTATION: 'presentation',
-  TRAINING: 'training',
-  SALES_PITCH: 'sales_pitch',
-  SALES_CALL: 'sales_call',
-  CLIENT_MEETING: 'client_meeting',
-  TEAM_MEETING: 'team_meeting',
-  ONE_ON_ONE: 'one_on_one',
-  PERFORMANCE_REVIEW: 'performance_review',
-  BRAINSTORMING: 'brainstorming'
+  INTERVIEW: 'interview' as const,
+  MEETING: 'meeting' as const,
+  PRESENTATION: 'presentation' as const,
+  TRAINING: 'training' as const,
+  SALES_PITCH: 'sales_pitch' as const,
+  SALES_CALL: 'sales_call' as const,
+  CLIENT_MEETING: 'client_meeting' as const,
+  TEAM_MEETING: 'team_meeting' as const,
+  ONE_ON_ONE: 'one_on_one' as const,
+  PERFORMANCE_REVIEW: 'performance_review' as const,
+  BRAINSTORMING: 'brainstorming' as const,
 } as const;
 
 export const TONE_TYPES = {
-  PROFESSIONAL: 'professional',
-  CASUAL: 'casual',
-  FORMAL: 'formal',
-  FRIENDLY: 'friendly',
-  PERSUASIVE: 'persuasive',
-  CONFIDENT: 'confident',
-  CONSULTATIVE: 'consultative',
-  EMPATHETIC: 'empathetic',
-  ANALYTICAL: 'analytical',
-  CREATIVE: 'creative',
-  DIPLOMATIC: 'diplomatic'
+  PROFESSIONAL: 'professional' as const,
+  CASUAL: 'casual' as const,
+  FORMAL: 'formal' as const,
+  FRIENDLY: 'friendly' as const,
+  CONFIDENT: 'confident' as const,
+  CONSULTATIVE: 'consultative' as const,
+  PERSUASIVE: 'persuasive' as const,
+  EMPATHETIC: 'empathetic' as const,
+  ANALYTICAL: 'analytical' as const,
+  CREATIVE: 'creative' as const,
+  DIPLOMATIC: 'diplomatic' as const,
 } as const;
+
+export const DOCUMENT_TYPES = {
+  RESUME: 'resume' as const,
+  COVER_LETTER: 'cover_letter' as const,
+  PORTFOLIO: 'portfolio' as const,
+  REFERENCE: 'reference' as const,
+  PRESENTATION: 'presentation' as const,
+  PROPOSAL: 'proposal' as const,
+  CASE_STUDY: 'case_study' as const,
+  PRICING: 'pricing' as const,
+  OTHER: 'other' as const,
+} as const;
+
+export const PRIORITY_LEVELS = {
+  LOW: 'low' as const,
+  MEDIUM: 'medium' as const,
+  HIGH: 'high' as const,
+  URGENT: 'urgent' as const,
+  CRITICAL: 'critical' as const,
+  BACKGROUND: 'background' as const,
+} as const;
+
+// =============================================================================
+// TYPE GUARDS AND UTILITIES
+// =============================================================================
+
+export function isCallType(value: string): value is CallType {
+  return Object.values(CALL_TYPES).includes(value as CallType);
+}
+
+export function isToneType(value: string): value is ToneType {
+  return Object.values(TONE_TYPES).includes(value as ToneType);
+}
+
+export function isDocumentType(value: string): value is DocumentType {
+  return Object.values(DOCUMENT_TYPES).includes(value as DocumentType);
+}
+
+export function isPriorityLevel(value: string): value is PriorityLevel {
+  return Object.values(PRIORITY_LEVELS).includes(value as PriorityLevel);
+}

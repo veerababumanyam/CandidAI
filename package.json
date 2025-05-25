@@ -7,6 +7,7 @@
   "private": true,
   "scripts": {
     "build": "npm run type-check && npm run lint && webpack --mode production",
+    "build:simple": "webpack --mode production",
     "build:dev": "webpack --mode development",
     "watch": "webpack --mode development --watch",
     "clean": "rimraf dist",
