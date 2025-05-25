@@ -100,12 +100,6 @@ module.exports = (env, argv) => {
               ignore: ['**/.gitkeep']
             }
           },
-          // Copy icons to root for manifest.json references
-          {
-            from: 'src/assets/icons/*.png',
-            to: '[name][ext]',
-            noErrorOnMissing: true
-          },
           {
             from: 'src/assets/images',
             to: 'assets/images',

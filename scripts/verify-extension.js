@@ -17,17 +17,17 @@ const REQUIRED_FILES = [
   'dist/options.js',
   'dist/content.js',
   'dist/offscreen.js',
-  'dist/icon-16.png',
-  'dist/icon-32.png',
-  'dist/icon-48.png',
-  'dist/icon-128.png'
+  'dist/assets/icons/icon-16.png',
+  'dist/assets/icons/icon-32.png',
+  'dist/assets/icons/icon-48.png',
+  'dist/assets/icons/icon-128.png'
 ];
 
 const REQUIRED_ICONS = [
-  'dist/icon-16.png',
-  'dist/icon-32.png', 
-  'dist/icon-48.png',
-  'dist/icon-128.png'
+  'dist/assets/icons/icon-16.png',
+  'dist/assets/icons/icon-32.png', 
+  'dist/assets/icons/icon-48.png',
+  'dist/assets/icons/icon-128.png'
 ];
 
 console.log('🔍 Verifying CandidAI Extension...\n');
