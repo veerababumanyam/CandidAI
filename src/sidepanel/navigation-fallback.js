@@ -153,7 +153,20 @@
         e.preventDefault();
         
         // Construct the full URL to the options page
-        const baseUrl = window.location.origin + window.location.pathname.replace('/sidepanel/sidepanel.html', '');
+        const currentPath = window.location.pathname;
+        let baseUrl;
+        
+        if (currentPath.includes('/dist/sidepanel/sidepanel.html')) {
+          // Extension context with dist/ prefix
+          baseUrl = window.location.origin + currentPath.replace('/sidepanel/sidepanel.html', '');
+        } else if (currentPath.includes('/sidepanel/sidepanel.html')) {
+          // Development context without dist/ prefix
+          baseUrl = window.location.origin + currentPath.replace('/sidepanel/sidepanel.html', '');
+        } else {
+          // Fallback
+          baseUrl = window.location.origin + '/dist';
+        }
+        
         const optionsUrl = baseUrl + '/options/options.html';
         
         // Open in new tab

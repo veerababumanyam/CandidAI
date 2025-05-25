@@ -331,11 +331,69 @@ class SidePanelController {
   }
 
   /**
-   * Quick settings handlers
+   * Quick settings handlers - Opens options page in new browser tab
    */
   private openQuickSettings(): void {
-    // Implementation for quick settings modal
-    console.log('Opening quick settings');
+    try {
+      // Check if we're in an extension context
+      if (typeof chrome !== 'undefined' && chrome.tabs && chrome.runtime) {
+        // Extension context: use Chrome APIs
+        chrome.tabs.create({
+          url: chrome.runtime.getURL('options/options.html'),
+          active: true
+        });
+        console.log('Settings page opened in new tab via Chrome API');
+      } else {
+        // Testing/development context: use fallback
+        this.openSettingsFallback();
+      }
+    } catch (error) {
+      console.error('Error opening settings page via Chrome API:', error);
+      // Fallback for any Chrome API failures
+      this.openSettingsFallback();
+    }
+  }
+
+  /**
+   * Fallback method to open settings page
+   */
+  private openSettingsFallback(): void {
+    try {
+      // Determine the base URL for the options page
+      let optionsUrl: string;
+      
+      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL) {
+        // Extension context with runtime API available
+        optionsUrl = chrome.runtime.getURL('options/options.html');
+      } else {
+        // Development/testing context: construct URL based on current location
+        const currentUrl = window.location.href;
+        if (currentUrl.includes('127.0.0.1') || currentUrl.includes('localhost')) {
+          // Local development server
+          const baseUrl = currentUrl.split('/dist/')[0];
+          optionsUrl = `${baseUrl}/dist/options/options.html`;
+        } else {
+          // Relative path fallback
+          optionsUrl = '../options/options.html';
+        }
+      }
+      
+      // Open in new window/tab
+      const settingsWindow = window.open(optionsUrl, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+      
+      if (settingsWindow) {
+        settingsWindow.focus();
+        console.log('Settings page opened in new window:', optionsUrl);
+      } else {
+        // If popup blocked, try to navigate in same window
+        console.log('Popup blocked, redirecting in same window');
+        window.location.href = optionsUrl;
+      }
+    } catch (error) {
+      console.error('Fallback settings opening failed:', error);
+      // Last resort: show user message
+      alert('Please open the options page manually: dist/options/options.html');
+    }
   }
 
   /**

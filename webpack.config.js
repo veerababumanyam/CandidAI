@@ -131,6 +131,12 @@ module.exports = (env, argv) => {
             from: 'src/options/options.css',
             to: 'options/options.css',
             noErrorOnMissing: true
+          },
+          // Copy navigation fallback script
+          {
+            from: 'src/sidepanel/navigation-fallback.js',
+            to: 'sidepanel/navigation-fallback.js',
+            noErrorOnMissing: true
           }
         ]
       }),
