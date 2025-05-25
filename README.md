@@ -6,7 +6,7 @@
   **Your AI-Powered Partner for Smarter Conversations**
   
   [![Chrome Web Store](https://img.shields.io/badge/Chrome-Extension-4285F4?style=for-the-badge&logo=google-chrome&logoColor=white)](https://chrome.google.com/webstore)
-  [![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
+  [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=for-the-badge)](LICENSE)
   [![Version](https://img.shields.io/badge/Version-1.0.0-e8a396?style=for-the-badge)](package.json)
 </div>
 
@@ -189,7 +189,7 @@ Please see our [CONTRIBUTING.md](CONTRIBUTING.md) (to be created) for detailed g
 
 ## 📜 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
@@ -206,5 +206,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 <div align="center">
-  Made with ❤️ by the CandidAI Team
+  <strong>Author:</strong> Veera Babu Manyam<br>
+  <strong>Organization:</strong> SAWAS<br>
+  Made with ❤️ for the AI community
 </div>
