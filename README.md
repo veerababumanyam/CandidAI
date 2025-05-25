@@ -184,6 +184,9 @@ npm run format
 
 # Create a distributable ZIP file
 npm run package
+
+# Verify extension is ready to load in Chrome
+npm run verify
 ```
 
 ## 🔧 Development & Build Troubleshooting
@@ -243,6 +246,9 @@ npm run build:force
 
 **Issue**: Extension not loading after git clone
 **Solution**: The extension should work immediately after cloning. Just load the existing `dist/` folder - no build required!
+
+**Issue**: Want to verify extension is ready before loading in Chrome
+**Solution**: Run `npm run verify` to check all required files and icons are present.
 
 ## 🤝 Contributing
 

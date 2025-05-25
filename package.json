@@ -33,7 +33,8 @@
     "migrate:service": "node scripts/migrate-service.js",
     "prepare": "husky install",
     "validate": "npm run type-check && npm run lint && npm run test && npm run format:check",
-    "icons": "node create-icons.js"
+    "icons": "node create-icons.js",
+    "verify": "node scripts/verify-extension.js"
   },
   "dependencies": {
     "mammoth": "^1.6.0",
