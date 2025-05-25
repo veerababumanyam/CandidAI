@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+  <path d="M12 0L24 12L12 24L0 12L12 0Z" fill="#FF6B35"/>
+  <path d="M12 3L21 12L12 21L3 12L12 3Z" fill="#FFFFFF"/>
+  <path d="M9.5 8.5L14.5 8.5L12 6L9.5 8.5Z" fill="#FF6B35"/>
+  <path d="M9.5 15.5L14.5 15.5L12 18L9.5 15.5Z" fill="#FF6B35"/>
+  <path d="M8.5 9.5L8.5 14.5L6 12L8.5 9.5Z" fill="#FF6B35"/>
+  <path d="M15.5 9.5L15.5 14.5L18 12L15.5 9.5Z" fill="#FF6B35"/>
+</svg> 

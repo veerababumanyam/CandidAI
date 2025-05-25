@@ -48,6 +48,9 @@ class OptionsController {
    * Initialize event listeners for the options page
    */
   private initializeEventListeners(): void {
+    // Initialize navigation
+    this.initializeNavigation();
+    
     // API Key save buttons
     const saveApiKeysBtn = document.getElementById('save-api-keys');
     if (saveApiKeysBtn) {
@@ -55,9 +58,9 @@ class OptionsController {
     }
 
     // Test connection button
-    const testConnectionBtn = document.getElementById('test-connection');
+    const testConnectionBtn = document.getElementById('test-api-keys');
     if (testConnectionBtn) {
-      testConnectionBtn.addEventListener('click', this.testConnection.bind(this));
+      testConnectionBtn.addEventListener('click', this.testAPIConnections.bind(this));
     }
 
     // Save context button
@@ -118,6 +121,78 @@ class OptionsController {
     document.querySelectorAll('[id$="-calendar-connect"]').forEach(btn => {
       btn.addEventListener('click', this.connectCalendar.bind(this));
     });
+
+    // Initialize document upload handlers
+    this.initializeDocumentUpload();
+    
+    // Initialize LLM reordering functionality
+    this.initializeLLMReordering();
+  }
+
+  /**
+   * Initialize navigation system for section switching
+   */
+  private initializeNavigation(): void {
+    // Get all navigation buttons
+    const navButtons = document.querySelectorAll('.ca-nav__button');
+    
+    // Add click listeners to navigation buttons
+    navButtons.forEach(button => {
+      button.addEventListener('click', (event) => {
+        event.preventDefault();
+        const targetSection = button.getAttribute('data-section');
+        if (targetSection) {
+          this.switchToSection(targetSection);
+        }
+      });
+    });
+
+    // Initialize with API Keys section active by default
+    this.switchToSection('api-keys');
+  }
+
+  /**
+   * Switch to a specific section
+   */
+  private switchToSection(targetSectionName: string): void {
+    console.log(`🔄 Switching to section: ${targetSectionName}`);
+    
+    // Remove active class from all navigation buttons
+    const allButtons = document.querySelectorAll('.ca-nav__button');
+    console.log(`📍 Found ${allButtons.length} navigation buttons`);
+    allButtons.forEach(btn => {
+      btn.classList.remove('ca-nav__button--active');
+    });
+
+    // Add active class to target button
+    const activeButton = document.querySelector(`[data-section="${targetSectionName}"]`);
+    if (activeButton) {
+      activeButton.classList.add('ca-nav__button--active');
+      console.log(`✅ Activated button for: ${targetSectionName}`);
+    } else {
+      console.error(`❌ Button not found for section: ${targetSectionName}`);
+    }
+
+    // Hide all sections
+    const allSections = document.querySelectorAll('.ca-section');
+    console.log(`📍 Found ${allSections.length} sections`);
+    allSections.forEach(section => {
+      section.classList.remove('ca-section--active');
+      section.style.display = 'none';
+    });
+
+    // Show target section
+    const targetSection = document.querySelector(`#section-${targetSectionName}`);
+    if (targetSection) {
+      targetSection.classList.add('ca-section--active');
+      targetSection.style.display = 'block';
+      console.log(`✅ Showed section: section-${targetSectionName}`);
+    } else {
+      console.error(`❌ Section not found: section-${targetSectionName}`);
+      // List all available sections for debugging
+      const availableSections = document.querySelectorAll('[id^="section-"]');
+      console.log('Available sections:', Array.from(availableSections).map(s => s.id));
+    }
   }
 
   /**
@@ -349,6 +424,306 @@ class OptionsController {
     this.showNotification(`${calendarType} calendar connection initiated`, 'info');
   }
 
+  /**
+   * Initialize document upload handlers
+   */
+  private initializeDocumentUpload(): void {
+    const dropzone = document.getElementById('resume-dropzone');
+    const fileInput = document.getElementById('resume-input') as HTMLInputElement;
+    const preview = document.getElementById('resume-preview');
+
+    if (!dropzone || !fileInput || !preview) return;
+
+    // Drag and drop handlers
+    dropzone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropzone.classList.add('ca-dropzone--dragover');
+    });
+
+    dropzone.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropzone.classList.remove('ca-dropzone--dragover');
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dropzone.classList.remove('ca-dropzone--dragover');
+      
+      const files = e.dataTransfer?.files;
+      if (files && files.length > 0) {
+        this.handleFileUpload(files[0]);
+      }
+    });
+
+    // Click to upload
+    dropzone.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    // File input change
+    fileInput.addEventListener('change', (e) => {
+      const target = e.target as HTMLInputElement;
+      if (target.files && target.files.length > 0) {
+        this.handleFileUpload(target.files[0]);
+      }
+    });
+
+    // Remove file button
+    const removeBtn = document.getElementById('remove-resume');
+    if (removeBtn) {
+      removeBtn.addEventListener('click', () => {
+        this.removeUploadedFile();
+      });
+    }
+  }
+
+  /**
+   * Handle file upload
+   */
+  private handleFileUpload(file: File): void {
+    console.log('📄 File uploaded:', file.name, file.size);
+    
+    // Validate file type
+    const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    if (!allowedTypes.includes(file.type)) {
+      this.showToast('Please upload a PDF or DOCX file', 'error');
+      return;
+    }
+
+    // Validate file size (10MB max)
+    if (file.size > 10 * 1024 * 1024) {
+      this.showToast('File size must be less than 10MB', 'error');
+      return;
+    }
+
+    // Show preview
+    this.showFilePreview(file);
+    
+    // Process file (placeholder for actual processing)
+    this.processDocument(file);
+  }
+
+  /**
+   * Show file preview
+   */
+  private showFilePreview(file: File): void {
+    const preview = document.getElementById('resume-preview');
+    const nameElement = preview?.querySelector('.ca-file-preview__name');
+    const sizeElement = preview?.querySelector('.ca-file-preview__size');
+
+    if (preview && nameElement && sizeElement) {
+      nameElement.textContent = file.name;
+      sizeElement.textContent = `${(file.size / 1024 / 1024).toFixed(2)} MB`;
+      preview.style.display = 'flex';
+      
+      // Hide dropzone
+      const dropzone = document.getElementById('resume-dropzone');
+      if (dropzone) {
+        dropzone.style.display = 'none';
+      }
+    }
+  }
+
+  /**
+   * Remove uploaded file
+   */
+  private removeUploadedFile(): void {
+    const preview = document.getElementById('resume-preview');
+    const dropzone = document.getElementById('resume-dropzone');
+    const fileInput = document.getElementById('resume-input') as HTMLInputElement;
+
+    if (preview) preview.style.display = 'none';
+    if (dropzone) dropzone.style.display = 'flex';
+    if (fileInput) fileInput.value = '';
+    
+    console.log('📄 File removed');
+  }
+
+  /**
+   * Process document (placeholder)
+   */
+  private async processDocument(file: File): Promise<void> {
+    try {
+      // This would normally send to service worker for processing
+      console.log('📄 Processing document:', file.name);
+      this.showToast('Document uploaded successfully!', 'success');
+    } catch (error) {
+      console.error('Document processing error:', error);
+      this.showToast('Failed to process document', 'error');
+    }
+  }
+
+  /**
+   * Initialize LLM fallback reordering
+   */
+  private initializeLLMReordering(): void {
+    // Add SortableJS dynamically if not present
+    if (typeof window.Sortable === 'undefined') {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js';
+      script.onload = () => {
+        this.setupSortable();
+      };
+      document.head.appendChild(script);
+    } else {
+      this.setupSortable();
+    }
+  }
+
+  /**
+   * Setup sortable functionality
+   */
+  private setupSortable(): void {
+    const fallbackContainer = document.getElementById('fallback-order');
+    if (!fallbackContainer || typeof window.Sortable === 'undefined') return;
+
+    new window.Sortable(fallbackContainer, {
+      animation: 150,
+      handle: '.ca-drag-handle',
+      onEnd: (evt) => {
+        console.log('🔄 LLM order changed:', evt.oldIndex, '->', evt.newIndex);
+        this.saveLLMFallbackOrder();
+      }
+    });
+
+    console.log('🔄 LLM fallback reordering initialized');
+  }
+
+  /**
+   * Save LLM fallback order
+   */
+  private saveLLMFallbackOrder(): void {
+    const items = document.querySelectorAll('.ca-fallback-item');
+    const newOrder = Array.from(items).map(item => 
+      (item as HTMLElement).dataset.provider
+    ).filter(Boolean);
+    
+    console.log('💾 Saving LLM fallback order:', newOrder);
+    
+    // Save to storage (placeholder)
+    if (typeof chrome !== 'undefined' && chrome.storage) {
+      chrome.storage.local.set({ llmFallbackOrder: newOrder });
+    } else {
+      localStorage.setItem('llmFallbackOrder', JSON.stringify(newOrder));
+    }
+    
+    this.showToast('LLM fallback order saved!', 'success');
+  }
+
+  /**
+   * Test API connections with real validation
+   */
+  private async testAPIConnections(): Promise<void> {
+    const keys = this.getAPIKeys();
+    const results = { openai: false, anthropic: false, gemini: false };
+    
+    this.showToast('Testing API connections...', 'info');
+    
+    try {
+      // Test OpenAI
+      if (keys.openai) {
+        results.openai = await this.testOpenAIConnection(keys.openai);
+      }
+      
+      // Test Anthropic
+      if (keys.anthropic) {
+        results.anthropic = await this.testAnthropicConnection(keys.anthropic);
+      }
+      
+      // Test Gemini
+      if (keys.gemini) {
+        results.gemini = await this.testGeminiConnection(keys.gemini);
+      }
+      
+      // Show results
+      const successCount = Object.values(results).filter(Boolean).length;
+      const totalTests = Object.values(keys).filter(Boolean).length;
+      
+      if (successCount === totalTests && totalTests > 0) {
+        this.showToast(`✅ All ${successCount} API connections successful!`, 'success');
+      } else {
+        this.showToast(`⚠️ ${successCount}/${totalTests} API connections successful`, 'warning');
+      }
+      
+      console.log('🔑 API Test Results:', results);
+      
+    } catch (error) {
+      console.error('API testing error:', error);
+      this.showToast('API testing failed. Check console for details.', 'error');
+    }
+  }
+
+  /**
+   * Test OpenAI connection
+   */
+  private async testOpenAIConnection(apiKey: string): Promise<boolean> {
+    try {
+      const response = await fetch('https://api.openai.com/v1/models', {
+        headers: { 'Authorization': `Bearer ${apiKey}` }
+      });
+      return response.ok;
+    } catch (error) {
+      console.error('OpenAI test failed:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Test Anthropic connection
+   */
+  private async testAnthropicConnection(apiKey: string): Promise<boolean> {
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model: 'claude-3-haiku-20240307',
+          max_tokens: 1,
+          messages: [{ role: 'user', content: 'test' }]
+        })
+      });
+      return response.ok || response.status === 400; // 400 is expected for minimal request
+    } catch (error) {
+      console.error('Anthropic test failed:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Test Gemini connection
+   */
+  private async testGeminiConnection(apiKey: string): Promise<boolean> {
+    try {
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+      return response.ok;
+    } catch (error) {
+      console.error('Gemini test failed:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get API keys from form
+   */
+  private getAPIKeys(): { openai: string; anthropic: string; gemini: string } {
+    const openaiInput = document.getElementById('openai-key') as HTMLInputElement;
+    const anthropicInput = document.getElementById('anthropic-key') as HTMLInputElement;
+    const geminiInput = document.getElementById('gemini-key') as HTMLInputElement;
+
+    return {
+      openai: openaiInput?.value || '',
+      anthropic: anthropicInput?.value || '',
+      gemini: geminiInput?.value || ''
+    };
+  }
+
   // =============================================================================
   // HELPER METHODS
   // =============================================================================
@@ -356,9 +731,9 @@ class OptionsController {
   private collectApiKeys(): Record<string, string> {
     const apiKeys: Record<string, string> = {};
     
-    const openaiKey = (document.getElementById('openai-api-key') as HTMLInputElement)?.value;
-    const anthropicKey = (document.getElementById('anthropic-api-key') as HTMLInputElement)?.value;
-    const geminiKey = (document.getElementById('gemini-api-key') as HTMLInputElement)?.value;
+    const openaiKey = (document.getElementById('openai-key') as HTMLInputElement)?.value;
+    const anthropicKey = (document.getElementById('anthropic-key') as HTMLInputElement)?.value;
+    const geminiKey = (document.getElementById('gemini-key') as HTMLInputElement)?.value;
     
     if (openaiKey) apiKeys.openai = openaiKey;
     if (anthropicKey) apiKeys.anthropic = anthropicKey;
@@ -410,8 +785,8 @@ class OptionsController {
   }
 
   private collectLanguageSettings(): Record<string, any> {
-    const interfaceLanguage = (document.getElementById('interface-language') as HTMLSelectElement)?.value;
-    const aiLanguage = (document.getElementById('ai-response-language') as HTMLSelectElement)?.value;
+    const interfaceLanguage = (document.getElementById('ui-language') as HTMLSelectElement)?.value;
+    const aiLanguage = (document.getElementById('response-language') as HTMLSelectElement)?.value;
     const dateFormat = (document.getElementById('date-format') as HTMLSelectElement)?.value;
     const timeFormat = (document.getElementById('time-format') as HTMLSelectElement)?.value;
     
@@ -424,9 +799,9 @@ class OptionsController {
   }
 
   private populateApiKeys(apiKeys: Record<string, string>): void {
-    const openaiInput = document.getElementById('openai-api-key') as HTMLInputElement;
-    const anthropicInput = document.getElementById('anthropic-api-key') as HTMLInputElement;
-    const geminiInput = document.getElementById('gemini-api-key') as HTMLInputElement;
+    const openaiInput = document.getElementById('openai-key') as HTMLInputElement;
+    const anthropicInput = document.getElementById('anthropic-key') as HTMLInputElement;
+    const geminiInput = document.getElementById('gemini-key') as HTMLInputElement;
     
     if (openaiInput && apiKeys.openai) openaiInput.value = apiKeys.openai;
     if (anthropicInput && apiKeys.anthropic) anthropicInput.value = apiKeys.anthropic;
@@ -461,8 +836,8 @@ class OptionsController {
   }
 
   private populateLanguageSettings(settings: Record<string, any>): void {
-    const interfaceSelect = document.getElementById('interface-language') as HTMLSelectElement;
-    const aiSelect = document.getElementById('ai-response-language') as HTMLSelectElement;
+    const interfaceSelect = document.getElementById('ui-language') as HTMLSelectElement;
+    const aiSelect = document.getElementById('response-language') as HTMLSelectElement;
     const dateSelect = document.getElementById('date-format') as HTMLSelectElement;
     const timeSelect = document.getElementById('time-format') as HTMLSelectElement;
     
@@ -506,6 +881,73 @@ class OptionsController {
     setTimeout(() => {
       notification.remove();
     }, 3000);
+  }
+
+  private showToast(message: string, type: 'success' | 'error' | 'info' | 'warning' = 'info'): void {
+    console.log(`🍞 TOAST ${type.toUpperCase()}: ${message}`);
+    
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `toast toast--${type}`;
+    toast.innerHTML = `
+      <div class="toast__content">
+        <span class="toast__message">${message}</span>
+        <button class="toast__close" onclick="this.parentElement.parentElement.remove()">×</button>
+      </div>
+    `;
+    
+    // Add styles if not present
+    if (!document.querySelector('#toast-styles')) {
+      const styles = document.createElement('style');
+      styles.id = 'toast-styles';
+      styles.textContent = `
+        .toast {
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: white;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          z-index: 10000;
+          min-width: 300px;
+          animation: slideIn 0.3s ease;
+        }
+        .toast--success { border-left: 4px solid #10b981; }
+        .toast--error { border-left: 4px solid #ef4444; }
+        .toast--warning { border-left: 4px solid #f59e0b; }
+        .toast--info { border-left: 4px solid #3b82f6; }
+        .toast__content {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 12px 16px;
+        }
+        .toast__message { flex: 1; font-size: 14px; }
+        .toast__close {
+          background: none;
+          border: none;
+          font-size: 18px;
+          cursor: pointer;
+          color: #666;
+          margin-left: 12px;
+        }
+        @keyframes slideIn {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+      `;
+      document.head.appendChild(styles);
+    }
+    
+    // Add to page
+    document.body.appendChild(toast);
+    
+    // Remove after 5 seconds
+    setTimeout(() => {
+      if (toast.parentElement) {
+        toast.remove();
+      }
+    }, 5000);
   }
 
   /**

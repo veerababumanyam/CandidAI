@@ -390,29 +390,29 @@ export interface AudioConfig {
 export type CallType = 'interview' | 'meeting' | 'presentation' | 'training';
 export type ToneType = 'professional' | 'casual' | 'formal' | 'friendly';
 
-export interface DocumentMetadata {
-  id: string;
-  name: string;
-  type: string;
-  size: number;
-  uploadedAt: Date;
-  processingStatus: 'pending' | 'processing' | 'completed' | 'error';
-}
-
 export interface MeetingControlsState {
   isRecording: boolean;
-  currentCallType: CallType;
-  currentTone: ToneType;
-  documentCount: number;
-  isProcessing: boolean;
-  connectionStatus: 'connected' | 'disconnected' | 'connecting';
+  isTranscribing: boolean;
+  callType: string;
+  tone: string;
+  documentsLoaded: number;
 }
 
 export interface DocumentUploadState {
   isUploading: boolean;
   uploadProgress: number;
-  error?: string;
-  lastUploadedFile?: DocumentMetadata;
+  error: string | null;
+  errors?: string[];
+}
+
+export interface DocumentMetadata {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  format: string;
+  uploadDate: Date;
+  priority: 'low' | 'medium' | 'high';
 }
 
 export interface MeetingContext {
@@ -451,3 +451,31 @@ export interface EncryptedStorage extends StorageProvider {
 export * from './speech';
 export * from './platforms';
 export * from './api';
+
+export const CALL_TYPES = {
+  INTERVIEW: 'interview',
+  MEETING: 'meeting', 
+  PRESENTATION: 'presentation',
+  TRAINING: 'training',
+  SALES_PITCH: 'sales_pitch',
+  SALES_CALL: 'sales_call',
+  CLIENT_MEETING: 'client_meeting',
+  TEAM_MEETING: 'team_meeting',
+  ONE_ON_ONE: 'one_on_one',
+  PERFORMANCE_REVIEW: 'performance_review',
+  BRAINSTORMING: 'brainstorming'
+} as const;
+
+export const TONE_TYPES = {
+  PROFESSIONAL: 'professional',
+  CASUAL: 'casual',
+  FORMAL: 'formal',
+  FRIENDLY: 'friendly',
+  PERSUASIVE: 'persuasive',
+  CONFIDENT: 'confident',
+  CONSULTATIVE: 'consultative',
+  EMPATHETIC: 'empathetic',
+  ANALYTICAL: 'analytical',
+  CREATIVE: 'creative',
+  DIPLOMATIC: 'diplomatic'
+} as const;

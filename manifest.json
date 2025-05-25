@@ -1,0 +1,74 @@
+{
+  "manifest_version": 3,
+  "name": "CandidAI - Interview Assistant",
+  "description": "AI-powered real-time interview assistance with advanced LLM orchestration and contextual awareness",
+  "version": "1.0.0",
+  "author": "CandidAI Team",
+
+  "permissions": ["storage", "activeTab", "scripting", "sidePanel", "notifications", "offscreen"],
+
+  "optional_permissions": ["desktopCapture"],
+
+  "host_permissions": [
+    "https://meet.google.com/*",
+    "https://*.zoom.us/*",
+    "https://teams.microsoft.com/*",
+    "https://*.linkedin.com/*",
+    "https://*.hirevue.com/*"
+  ],
+
+  "background": {
+    "service_worker": "dist/service-worker.js",
+    "type": "module"
+  },
+
+  "action": {
+    "default_popup": "",
+    "default_icon": {
+      "16": "dist/assets/icons/icon-16.png",
+      "32": "dist/assets/icons/icon-32.png",
+      "48": "dist/assets/icons/icon-48.png",
+      "128": "dist/assets/icons/icon-128.png"
+    },
+    "default_title": "CandidAI - Click to open interview assistant"
+  },
+
+  "side_panel": {
+    "default_path": "dist/sidepanel/sidepanel.html"
+  },
+
+  "content_scripts": [
+    {
+      "matches": [
+        "https://meet.google.com/*",
+        "https://*.zoom.us/*",
+        "https://teams.microsoft.com/*",
+        "https://*.linkedin.com/*",
+        "https://*.hirevue.com/*"
+      ],
+      "js": ["dist/content.js"],
+      "css": ["dist/css/content.css"],
+      "run_at": "document_end"
+    }
+  ],
+
+  "options_page": "dist/options/options.html",
+
+  "icons": {
+    "16": "dist/assets/icons/icon-16.png",
+    "32": "dist/assets/icons/icon-32.png",
+    "48": "dist/assets/icons/icon-48.png",
+    "128": "dist/assets/icons/icon-128.png"
+  },
+
+  "web_accessible_resources": [
+    {
+      "resources": ["dist/assets/*", "dist/css/*"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none';"
+  }
+} 

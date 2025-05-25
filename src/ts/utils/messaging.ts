@@ -61,23 +61,27 @@ export class MessageBroker {
    * Initialize the message listener for incoming messages
    */
   private initializeMessageListener(): void {
-    chrome.runtime.onMessage.addListener(
-      (
-        request: MessageRequest,
-        sender: chrome.runtime.MessageSender,
-        sendResponse: (response: MessageResponse) => void,
-      ): boolean => {
-        this.handleIncomingMessage(request, sender, sendResponse).catch((error) => {
-          console.error('Error handling incoming message:', error);
-          sendResponse({
-            success: false,
-            error: error instanceof Error ? error.message : 'Unknown error',
+    if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.onMessage) {
+      chrome.runtime.onMessage.addListener(
+        (
+          request: MessageRequest,
+          sender: chrome.runtime.MessageSender,
+          sendResponse: (response: MessageResponse) => void,
+        ): boolean => {
+          this.handleIncomingMessage(request, sender, sendResponse).catch((error) => {
+            console.error('Error handling incoming message:', error);
+            sendResponse({
+              success: false,
+              error: error instanceof Error ? error.message : 'Unknown error',
+            });
           });
-        });
 
-        return true; // Keep message channel open for async response
-      },
-    );
+          return true; // Keep message channel open for async response
+        },
+      );
+    } else {
+      console.warn('Chrome extension APIs not available in this environment');
+    }
   }
 
   /**
@@ -217,6 +221,12 @@ export class MessageBroker {
       };
 
       try {
+        if (typeof chrome === 'undefined' || !chrome.runtime) {
+          clearTimeout(timeout);
+          reject(new Error('Chrome extension APIs not available'));
+          return;
+        }
+
         if (tabId) {
           chrome.tabs.sendMessage(tabId, request, responseHandler);
         } else {
@@ -237,6 +247,18 @@ export class MessageBroker {
     request: MessageRequest,
   ): Promise<MessageResponse> {
     return this.sendMessage(request, tabId);
+  }
+
+  /**
+   * Send a command with payload - convenience method
+   */
+  public async sendCommand(command: string, payload: any): Promise<MessageResponse> {
+    const request: MessageRequest = {
+      command,
+      data: payload,
+      timestamp: Date.now()
+    };
+    return this.sendMessage(request);
   }
 
   /**

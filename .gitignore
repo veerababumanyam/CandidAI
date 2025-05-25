@@ -55,9 +55,26 @@ desktop.ini
 *.temp
 .cache/
 
-# API Keys (extra safety)
+# API Keys and Sensitive Data (extra safety)
 **/apikeys.json
 **/credentials.json
+**/*API_KEY*
+**/*api_key*
+**/*secret*
+**/*SECRET*
+
+# Test Results and Reports
+test-results/
+playwright-report/
+*test-results*.json
+*TEST_RESULTS*.json
+*FUNCTIONALITY_REPORT*.md
+*SETTINGS_BUTTON_TEST*.md
+*COMPREHENSIVE_FUNCTIONALITY*.md
+*.png
+*.jpg
+*.jpeg
+screenshots/
 
 # Chrome extension specific
 *.pem
