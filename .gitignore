@@ -64,6 +64,7 @@ desktop.ini
 **/*SECRET*
 
 # Test Results and Reports
+test/
 test-results/
 playwright-report/
 *test-results*.json

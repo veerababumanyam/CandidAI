@@ -32,7 +32,7 @@ CandidAI is designed to be your go-to AI assistant for a multitude of profession
 
 - **🤝 Effective Meetings & Presentations**: Stay on top of discussions, instantly recall past decisions or data points from agendas or attached reports, and contribute more effectively with context-aware suggestions. Deliver compelling presentations with key information at your fingertips.
 - **📈 Successful Sales Engagements**: Craft persuasive pitches by having product specifications, competitor information, and answers to common objections readily available. Impress clients with your deep knowledge and rapid, informed responses.
- **🚀 Successful Interviews**:
+- **🚀 Successful Interviews**: Excel in job interviews by having your resume, company research, and technical documentation instantly accessible. Get real-time suggestions for thoughtful questions, articulate responses based on your experience, and demonstrate deep knowledge of the role and organization with confidence.
 - **📞 Insightful Client Consultations**: Provide more informed advice by quickly accessing case histories, technical documentation, or best practices relevant to the client's specific needs and uploaded context.
 - **📚 Accelerated Learning & Research**: Use CandidAI as a dynamic study partner to summarize complex documents, get instant explanations on intricate topics during online courses, or quickly find relevant information within research papers.
 - **✍️ Streamlined Content Creation & Brainstorming**: Leverage AI suggestions to overcome writer's block, generate ideas, or refine your talking points for any presentation, report, or written communication, all informed by your provided documents.
