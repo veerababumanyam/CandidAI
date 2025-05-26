@@ -567,57 +567,187 @@ class OptionsController {
    * Initialize LLM fallback reordering
    */
   private initializeLLMReordering(): void {
+    console.log('🔄 Initializing LLM fallback reordering...');
+    
+    // Show loading status
+    this.updateSortableStatus('loading');
+    
     // Add SortableJS dynamically if not present
     if (typeof window.Sortable === 'undefined') {
+      console.log('📦 Loading SortableJS library...');
       const script = document.createElement('script');
       script.src = 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js';
+      
       script.onload = () => {
+        console.log('✅ SortableJS loaded successfully');
         this.setupSortable();
       };
+      
+      script.onerror = () => {
+        console.error('❌ Failed to load SortableJS');
+        this.updateSortableStatus('error');
+        this.showToast('Failed to load drag & drop functionality', 'error');
+      };
+      
       document.head.appendChild(script);
     } else {
+      console.log('✅ SortableJS already available');
       this.setupSortable();
     }
   }
 
   /**
-   * Setup sortable functionality
+   * Update sortable status indicator
    */
-  private setupSortable(): void {
-    const fallbackContainer = document.getElementById('fallback-order');
-    if (!fallbackContainer || typeof window.Sortable === 'undefined') return;
-
-    new window.Sortable(fallbackContainer, {
-      animation: 150,
-      handle: '.ca-drag-handle',
-      onEnd: (evt) => {
-        console.log('🔄 LLM order changed:', evt.oldIndex, '->', evt.newIndex);
-        this.saveLLMFallbackOrder();
+  private updateSortableStatus(status: 'loading' | 'ready' | 'error'): void {
+    const statusContainer = document.getElementById('sortable-status');
+    if (!statusContainer) return;
+    
+    const loadingText = statusContainer.querySelector('.ca-loading-text') as HTMLElement;
+    const readyText = statusContainer.querySelector('.ca-ready-text') as HTMLElement;
+    
+    if (loadingText && readyText) {
+      switch (status) {
+        case 'loading':
+          loadingText.style.display = 'inline';
+          readyText.style.display = 'none';
+          break;
+        case 'ready':
+          loadingText.style.display = 'none';
+          readyText.style.display = 'inline';
+          break;
+        case 'error':
+          loadingText.textContent = '❌ Drag & drop failed to load';
+          loadingText.style.color = 'var(--ca-red-600)';
+          readyText.style.display = 'none';
+          break;
       }
-    });
-
-    console.log('🔄 LLM fallback reordering initialized');
+    }
   }
 
   /**
-   * Save LLM fallback order
+   * Setup sortable functionality with enhanced options
+   */
+  private setupSortable(): void {
+    const fallbackContainer = document.getElementById('fallback-order');
+    if (!fallbackContainer || typeof window.Sortable === 'undefined') {
+      console.error('❌ Cannot setup sortable: container or library missing');
+      this.updateSortableStatus('error');
+      return;
+    }
+
+    try {
+      new window.Sortable(fallbackContainer, {
+        animation: 200,
+        ghostClass: 'sortable-ghost',
+        chosenClass: 'sortable-chosen',
+        dragClass: 'sortable-drag',
+        handle: '.ca-drag-handle',
+        scroll: true,
+        scrollSensitivity: 100,
+        scrollSpeed: 10,
+        
+        onStart: (evt) => {
+          console.log('🎯 Drag started from position:', evt.oldIndex);
+          fallbackContainer.classList.add('sortable-drag-active');
+          this.showToast('Drag to reorder LLM providers', 'info');
+        },
+        
+        onEnd: (evt) => {
+          console.log('🔄 LLM order changed:', evt.oldIndex, '->', evt.newIndex);
+          fallbackContainer.classList.remove('sortable-drag-active');
+          
+          if (evt.oldIndex !== evt.newIndex) {
+            this.updatePriorityIndicators();
+            this.saveLLMFallbackOrder();
+            this.showToast('LLM fallback order updated successfully!', 'success');
+          }
+        },
+        
+        onMove: (evt) => {
+          // Provide visual feedback during drag
+          return true;
+        }
+      });
+
+      console.log('✅ LLM fallback reordering initialized successfully');
+      this.updateSortableStatus('ready');
+      this.updatePriorityIndicators(); // Initialize priority numbers
+      
+    } catch (error) {
+      console.error('❌ Failed to initialize sortable:', error);
+      this.updateSortableStatus('error');
+      this.showToast('Failed to initialize drag & drop functionality', 'error');
+    }
+  }
+
+  /**
+   * Update priority indicators based on current order
+   */
+  private updatePriorityIndicators(): void {
+    const items = document.querySelectorAll('.ca-fallback-item');
+    items.forEach((item, index) => {
+      const priorityIndicator = item.querySelector('.ca-priority-indicator') as HTMLElement;
+      if (priorityIndicator) {
+        priorityIndicator.textContent = (index + 1).toString();
+        
+        // Add animation effect
+        priorityIndicator.style.transform = 'scale(1.2)';
+        setTimeout(() => {
+          priorityIndicator.style.transform = 'scale(1)';
+        }, 200);
+      }
+    });
+  }
+
+  /**
+   * Save LLM fallback order with enhanced validation
    */
   private saveLLMFallbackOrder(): void {
-    const items = document.querySelectorAll('.ca-fallback-item');
-    const newOrder = Array.from(items).map(item => 
-      (item as HTMLElement).dataset.provider
-    ).filter(Boolean);
-    
-    console.log('💾 Saving LLM fallback order:', newOrder);
-    
-    // Save to storage (placeholder)
-    if (typeof chrome !== 'undefined' && chrome.storage) {
-      chrome.storage.local.set({ llmFallbackOrder: newOrder });
-    } else {
-      localStorage.setItem('llmFallbackOrder', JSON.stringify(newOrder));
+    try {
+      const items = document.querySelectorAll('.ca-fallback-item');
+      const newOrder = Array.from(items).map(item => 
+        (item as HTMLElement).dataset.provider
+      ).filter(Boolean);
+      
+      if (newOrder.length === 0) {
+        console.error('❌ No valid providers found in fallback order');
+        this.showToast('Error: No valid providers found', 'error');
+        return;
+      }
+      
+      console.log('💾 Saving LLM fallback order:', newOrder);
+      
+      // Save to storage with error handling
+      if (typeof chrome !== 'undefined' && chrome.storage) {
+        chrome.storage.local.set({ llmFallbackOrder: newOrder }, () => {
+          if (chrome.runtime.lastError) {
+            console.error('❌ Chrome storage error:', chrome.runtime.lastError);
+            this.showToast('Failed to save configuration', 'error');
+          } else {
+            console.log('✅ LLM fallback order saved to Chrome storage');
+          }
+        });
+      } else {
+        localStorage.setItem('llmFallbackOrder', JSON.stringify(newOrder));
+        console.log('✅ LLM fallback order saved to localStorage');
+      }
+      
+      // Update any dependent UI elements
+      this.updateProviderOrderDisplay(newOrder);
+      
+    } catch (error) {
+      console.error('❌ Error saving LLM fallback order:', error);
+      this.showToast('Failed to save fallback order', 'error');
     }
-    
-    this.showToast('LLM fallback order saved!', 'success');
+  }
+
+  /**
+   * Update provider order display in other parts of the UI
+   */
+  private updateProviderOrderDisplay(order: string[]): void {
+    // This method can be used to update other UI elements that show the provider order
+    console.log('🔄 Provider order updated:', order.map((p, i) => `${i + 1}. ${p}`).join(', '));
   }
 
   /**
