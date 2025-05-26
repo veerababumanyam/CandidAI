@@ -97,3 +97,6 @@ screenshots/
 # Uncomment these if you want to exclude transpiled JS files
 # src/**/*.js
 # !src/**/navigation-fallback.js
+
+# BMad Agent (exclude from Git)
+bmad-agent/

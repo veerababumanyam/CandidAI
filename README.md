@@ -1,6 +1,10 @@
 # CandidAI - Professional Interview Assistant Chrome Extension
 
-[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/your-repo/candidai)
+<div align="center">
+  <img src="logo.png" alt="CandidAI Logo" width="200" height="200" style="border-radius: 15px; margin: 20px 0;">
+</div>
+
+[![Version](https://img.shields.io/badge/version-1.0.4-blue.svg)](https://github.com/veerababumanyam/CandidAI)
 [![TypeScript](https://img.shields.io/badge/TypeScript-100%25-blue.svg)](https://www.typescriptlang.org/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
 [![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-yellow.svg)](https://developer.chrome.com/docs/extensions/)
