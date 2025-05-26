@@ -262,25 +262,21 @@ Response:`;
   /**
    * Build document context section with intelligent summarization
    */
-  private buildDocumentContext(
-    documents: readonly DocumentContent[],
-    callType: CallType
-  ): string {
-    if (documents.length === 0) return '';
+  private buildDocumentContext(relevantDocuments: DocumentContent[], callType: CallType): string {
+    if (!relevantDocuments.length) return '';
 
-    let context = '\nRELEVANT DOCUMENTS:\n';
-    
-    documents.forEach((doc, index) => {
+    let context = '\n=== Relevant Documents ===\n';
+    relevantDocuments.forEach((doc, index) => {
       context += `
-Document ${index + 1}: ${doc.id}
+Document ${index + 1}: ${doc.metadata.name}
 Summary: ${doc.summary}
-Key Points: ${doc.keyPoints.slice(0, 5).join(', ')}
+Key Points: ${doc.keyPoints?.slice(0, 5).join(', ') || 'No key points available'}
 `;
 
-      // Include specific structured data based on call type
-      if (callType === CALL_TYPES.INTERVIEW && doc.structuredData.personalInfo) {
+      // Add structured data for interviews
+      if (callType === CALL_TYPES.INTERVIEW && doc.structuredData?.personalInfo) {
         context += `Background: ${JSON.stringify(doc.structuredData.personalInfo, null, 2)}\n`;
-      } else if (callType.includes('sales') && doc.structuredData.pricing) {
+      } else if (callType.includes('sales') && doc.structuredData?.pricing) {
         context += `Pricing Info: ${JSON.stringify(doc.structuredData.pricing, null, 2)}\n`;
       }
     });
@@ -558,17 +554,67 @@ TONE REQUIREMENTS (${meetingContext.tone}):
    * Initialize AI providers with enterprise configuration
    */
   private initializeProviders(): void {
-    try {
-      // Note: Providers will be initialized with actual API keys when needed
-      // For now, initialize with dummy keys to prevent errors
-      this.providers.set('openai', new OpenAIProvider('dummy-key'));
-      this.providers.set('anthropic', new AnthropicProvider('dummy-key'));
-      this.providers.set('gemini', new GeminiProvider('dummy-key'));
-      
-      console.log(`Initialized ${this.providers.size} AI providers`);
-    } catch (error) {
-      console.error('Failed to initialize providers:', error);
-    }
+    // Create provider instances with proper interface implementation
+    const openaiProvider = {
+      name: 'openai',
+      apiKey: 'dummy-key',
+      model: 'gpt-4',
+      maxTokens: 4096,
+      temperature: 0.7,
+      isEnabled: true,
+      priority: 1,
+      rateLimits: {
+        requestsPerMinute: 60,
+        tokensPerMinute: 90000,
+        dailyLimit: 1000000
+      },
+      generateCompletion: async (request: any) => {
+        const provider = new OpenAIProvider('dummy-key');
+        return provider.generateCompletion(request);
+      }
+    };
+
+    const anthropicProvider = {
+      name: 'anthropic',
+      apiKey: 'dummy-key',
+      model: 'claude-3-sonnet',
+      maxTokens: 4096,
+      temperature: 0.7,
+      isEnabled: true,
+      priority: 2,
+      rateLimits: {
+        requestsPerMinute: 60,
+        tokensPerMinute: 100000,
+        dailyLimit: 1000000
+      },
+      generateCompletion: async (request: any) => {
+        const provider = new AnthropicProvider('dummy-key');
+        return provider.generateCompletion(request);
+      }
+    };
+
+    const geminiProvider = {
+      name: 'gemini',
+      apiKey: 'dummy-key',
+      model: 'gemini-pro',
+      maxTokens: 4096,
+      temperature: 0.7,
+      isEnabled: true,
+      priority: 3,
+      rateLimits: {
+        requestsPerMinute: 60,
+        tokensPerMinute: 32000,
+        dailyLimit: 1000000
+      },
+      generateCompletion: async (request: any) => {
+        const provider = new GeminiProvider('dummy-key');
+        return provider.generateCompletion(request);
+      }
+    };
+
+    this.providers.set('openai', openaiProvider);
+    this.providers.set('anthropic', anthropicProvider);
+    this.providers.set('gemini', geminiProvider);
   }
 
   /**
@@ -608,7 +654,19 @@ TONE REQUIREMENTS (${meetingContext.tone}):
   private calculateResponseConfidence(response: LLMResponse): number { return 0.8; }
   private extractSupportingPoints(content: string, docs: readonly DocumentContent[]): readonly string[] { return []; }
   private generateFollowUpQuestions(content: string, callType: CallType, tone: ToneType): readonly string[] { return []; }
-  private mapToneToFormality(tone: ToneType): 'formal' | 'casual' | 'neutral' { return 'formal'; }
+  private mapToneToFormality(tone: ToneType): 'formal' | 'professional' | 'casual' | 'friendly' {
+    switch (tone) {
+      case TONE_TYPES.FORMAL:
+        return 'formal';
+      case TONE_TYPES.CASUAL:
+        return 'casual';
+      case TONE_TYPES.FRIENDLY:
+        return 'friendly';
+      case TONE_TYPES.PROFESSIONAL:
+      default:
+        return 'professional';
+    }
+  }
   private async updateProviderPerformance(name: string, success: boolean, latency: number): Promise<void> { }
   private generateFallbackResponse(input: string, callType: CallType, tone: ToneType): ContextualResponse {
     return {

@@ -21,6 +21,17 @@ test-*.js
 **/test-server.js
 visual-regression-test.js
 
+# Personal Files (Resume/Test Data)
+VeeraBabu_Manyam_Resume*.pdf
+VeeraBabu_Manyam_Resume*.docx
+*resume*.pdf
+*resume*.docx
+*Resume*.pdf
+*Resume*.docx
+test_resume_processing.html
+test_resume_simple.html
+verify_resume_processing.js
+
 # IDE
 .vscode/
 .idea/
@@ -40,6 +51,7 @@ coverage/
 # Documentation (generated/temporary)
 IMPLEMENTATION_SUMMARY.md
 README-TYPESCRIPT-MIGRATION.md
+RESUME_TESTING_SUMMARY.md
 
 # Logs
 logs/

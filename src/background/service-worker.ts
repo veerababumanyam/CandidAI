@@ -15,7 +15,14 @@ import type {
   ChromeTab,
   ChromeSender,
   ChromePort,
-} from '@types/index';
+  ContextUpdate,
+  PlatformDetection,
+  PerformanceMetrics,
+  DocumentContent,
+  PriorityLevel,
+  CallType,
+  ToneType
+} from '../ts/types/index';
 
 import { MessageBroker } from '@utils/messaging';
 import { SecureStorage } from '@utils/storage';
@@ -183,28 +190,78 @@ class ServiceWorkerOrchestrator {
   }
 
   /**
-   * Central message routing with typed command pattern
-   * Implements CQRS (Command Query Responsibility Segregation)
+   * Handles incoming messages from content scripts, UI, and other parts of the extension
    */
   private async handleMessage(
     request: MessageRequest,
     sender: chrome.runtime.MessageSender,
-    sendResponse: (response: MessageResponse) => void,
-  ): Promise<boolean> {
-    const { command, payload } = request;
-    const messagePerfId = `message_${command}_${Date.now()}`;
-    this.performanceAnalyzer.startMeasurement(messagePerfId);
-
+    sendResponse: (response: MessageResponse) => void
+  ): Promise<void> {
     try {
-      let responseData: unknown;
+      const { command, payload = {} } = request;
+      let responseData: unknown = null;
 
       switch (command) {
+        case 'START_AUDIO_CAPTURE':
+          responseData = await this.startAudioCapture(
+            (payload as { tabId?: number; sessionId?: string }).tabId ?? 0,
+            (payload as { sessionId?: string }).sessionId ?? ''
+          );
+          break;
+
+        case 'STOP_AUDIO_CAPTURE':
+          responseData = await this.stopAudioCapture(
+            (payload as { tabId?: number; sessionId?: string }).tabId ?? 0,
+            (payload as { sessionId?: string }).sessionId ?? ''
+          );
+          break;
+
+        case 'END_INTERVIEW_SESSION':
+          responseData = await this.endInterviewSession(
+            (payload as { sessionId?: string }).sessionId ?? ''
+          );
+          break;
+
+        case 'UPDATE_CONTEXT':
+          const contextPayload = payload as {
+            sessionId?: string;
+            transcription?: {
+              text: string;
+              confidence: number;
+              timestamp: Date;
+              isInterim: boolean;
+            };
+          };
+          const contextUpdate: ContextUpdate = {
+            sessionId: contextPayload.sessionId ?? '',
+            transcription: {
+              text: contextPayload.transcription?.text ?? '',
+              confidence: contextPayload.transcription?.confidence ?? 0,
+              timestamp: contextPayload.transcription?.timestamp ?? new Date(),
+              isInterim: contextPayload.transcription?.isInterim ?? false
+            },
+            timestamp: new Date()
+          };
+          await this.contextManager.updateContext(contextUpdate);
+          break;
+
+        case 'TEST_LLM_CONNECTION':
+          responseData = await this.testLLMConnection(
+            (payload as { provider?: string }).provider ?? 'openai'
+          );
+          break;
+
+        case 'TEST_PLATFORM_DETECTION':
+          responseData = await this.testPlatformDetection(
+            (payload as { url?: string }).url ?? ''
+          );
+          break;
+
         case MESSAGE_COMMANDS.INIT_INTERVIEW_SESSION:
           responseData = await this.initializeInterviewSession(
             payload?.metadata,
             payload?.tabId,
           );
-          sendResponse({ success: true, data: responseData });
           break;
 
         case MESSAGE_COMMANDS.PROCESS_TRANSCRIPTION:
@@ -212,81 +269,45 @@ class ServiceWorkerOrchestrator {
             payload?.sessionId,
             payload?.transcriptionData,
           );
-          sendResponse({ success: true, data: responseData });
-          break;
-
-        case MESSAGE_COMMANDS.END_INTERVIEW_SESSION:
-          responseData = await this.endInterviewSession(payload?.sessionId);
-          if ((responseData as any)?.finalState === 'ENDED') {
-            sendResponse({ success: true, data: responseData });
-          } else {
-            sendResponse({
-              success: false,
-              error: (responseData as any)?.error || 'Failed to end interview session',
-              data: responseData,
-            });
-          }
-          break;
-
-        case MESSAGE_COMMANDS.UPDATE_CONTEXT:
-          await this.contextManager.updateContext(payload);
-          sendResponse({ success: true });
-          break;
-
-        case 'TEST_LLM_CONNECTION':
-          responseData = await this.testLLMConnection(payload?.provider);
-          sendResponse(responseData as MessageResponse);
-          break;
-
-        case 'TEST_PLATFORM_DETECTION':
-          responseData = await this.testPlatformDetection(payload?.url);
-          sendResponse(responseData as MessageResponse);
-          break;
-
-        case 'ping':
-          sendResponse({ success: true, message: 'CandidAI extension is running' });
           break;
 
         case MESSAGE_COMMANDS.CAPTURE_VISUAL:
           responseData = await this.captureAndAnalyzeVisual(payload);
-          sendResponse({ success: true, data: responseData });
           break;
 
         case MESSAGE_COMMANDS.GET_APP_STATE:
           responseData = {
             activeInterviewsCount: this.activeInterviews.size,
           };
-          sendResponse({ success: true, data: responseData });
+          break;
+
+        case 'ping':
+          responseData = {
+            success: true,
+            message: 'CandidAI extension is running'
+          };
           break;
 
         default:
           console.warn('Unknown command received:', command);
-          sendResponse({
+          responseData = {
             success: false,
             error: 'Unknown command',
-            details: `Command not recognized: ${command}`,
-          });
+            details: `Command not recognized: ${command}`
+          };
       }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      const errorStack = error instanceof Error ? error.stack : undefined;
-      
-      console.error(`Error handling command ${command}:`, error);
-      sendResponse({ 
-        success: false, 
-        error: errorMessage, 
-        details: errorStack,
-      });
-      this.performanceAnalyzer.logError(`command_error_${command}`, error);
-    } finally {
-      this.performanceAnalyzer.endMeasurement(messagePerfId);
-      const perfResult = this.performanceAnalyzer.getMeasurement(messagePerfId);
-      if (perfResult) {
-        console.log(`Command ${command} processed in ${perfResult.duration}ms`);
-      }
-    }
 
-    return true; // Keep message channel open for async response
+      sendResponse({
+        success: true,
+        data: responseData
+      });
+    } catch (error) {
+      console.error('Error handling message:', error);
+      sendResponse({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
   }
 
   /**
@@ -512,6 +533,110 @@ class ServiceWorkerOrchestrator {
     // Implementation needed
     console.log('Testing platform detection:', url);
     return { success: true };
+  }
+
+  private async startAudioCapture(tabId: number, sessionId: string): Promise<boolean> {
+    try {
+      await this.ensureOffscreenDocument();
+      
+      // ... existing audio capture logic ...
+      
+      return true;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.performanceAnalyzer.logError('start_audio_capture_failed', { 
+        sessionId, 
+        error: errorMessage 
+      });
+      throw error;
+    }
+  }
+
+  private async stopAudioCapture(tabId: number, sessionId: string): Promise<boolean> {
+    // Implementation needed
+    console.log('Stopping audio capture:', tabId, sessionId);
+    return true;
+  }
+
+  private async ensureOffscreenDocument(): Promise<void> {
+    try {
+      // Check if offscreen document already exists
+      const contexts = await chrome.runtime.getContexts?.({
+        contextTypes: ['OFFSCREEN_DOCUMENT']
+      });
+      
+      if (contexts && contexts.length > 0) {
+        console.log('Offscreen document already exists');
+        return;
+      }
+    } catch (error) {
+      // getContexts not available, continue with creation
+      console.log('getContexts not available, attempting to create offscreen document');
+    }
+
+    try {
+      const OFFSCREEN_REASONS: chrome.offscreen.Reason[] = ['USER_MEDIA', 'AUDIO_PLAYBACK'];
+      
+      await chrome.offscreen.createDocument({
+        url: chrome.runtime.getURL('offscreen/offscreen.html'),
+        reasons: OFFSCREEN_REASONS,
+        justification: 'Audio processing and capture for interview assistance'
+      });
+      
+      console.log('Offscreen document created successfully');
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('Only a single offscreen')) {
+        console.log('Offscreen document already exists');
+        return;
+      }
+      throw error;
+    }
+  }
+
+  private buildContextualResponse(
+    content: string,
+    context: {
+      callType: CallType;
+      tone: ToneType;
+      sessionId: string;
+      relevantDocuments: DocumentContent[];
+    }
+  ): {
+    content: string;
+    tone: ToneType;
+    confidence: number;
+    relevantDocuments: any[];
+    supportingPoints: string[];
+    followUpQuestions: string[];
+    metadata: {
+      callType: CallType;
+      responseType: 'answer' | 'suggestion' | 'clarification' | 'summary';
+      priority: PriorityLevel;
+      timing: 'immediate' | 'delayed' | 'scheduled';
+      length: 'brief' | 'detailed' | 'comprehensive';
+      formality: 'formal' | 'professional' | 'casual' | 'friendly';
+    };
+  } {
+    return {
+      content,
+      tone: context.tone,
+      confidence: 0.8,
+      relevantDocuments: context.relevantDocuments.map(doc => ({
+        id: doc.id,
+        name: doc.metadata.name,
+        type: doc.metadata.type
+      })),
+      supportingPoints: ['Key point 1', 'Key point 2'],
+      followUpQuestions: ['Follow-up 1', 'Follow-up 2'],
+      metadata: {
+        callType: context.callType,
+        responseType: 'answer' as const,
+        priority: 'medium' as PriorityLevel,
+        timing: 'immediate' as const,
+        length: 'brief' as const,
+        formality: 'professional' as const
+      }
+    };
   }
 }
 

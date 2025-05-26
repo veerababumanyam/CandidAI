@@ -124,11 +124,6 @@ class OptionsController {
       clearDataBtn.addEventListener('click', this.clearAllData.bind(this));
     }
 
-    // Calendar connect buttons
-    document.querySelectorAll('[id$="-calendar-connect"]').forEach(btn => {
-      btn.addEventListener('click', this.connectCalendar.bind(this));
-    });
-
     // Initialize document upload handlers
     this.initializeDocumentUpload();
     
@@ -421,17 +416,6 @@ class OptionsController {
   }
 
   /**
-   * Connect calendar
-   */
-  private connectCalendar(event: Event): void {
-    const target = event.target as HTMLElement;
-    const calendarType = target.id.replace('-calendar-connect', '');
-    
-    console.log(`Connecting ${calendarType} calendar`);
-    this.showNotification(`${calendarType} calendar connection initiated`, 'info');
-  }
-
-  /**
    * Initialize document upload handlers
    */
   private initializeDocumentUpload(): void {
@@ -509,7 +493,7 @@ class OptionsController {
     // Show preview
     this.showFilePreview(file);
     
-    // Process file (placeholder for actual processing)
+    // Process file with real PDF/DOCX parsing
     this.processDocument(file);
   }
 
@@ -550,17 +534,598 @@ class OptionsController {
   }
 
   /**
-   * Process document (placeholder)
+   * Process document with real PDF/DOCX parsing and enhanced user feedback
    */
   private async processDocument(file: File): Promise<void> {
+    let extractedText = '';
+    let extractedData: any = {};
+    
     try {
-      // This would normally send to service worker for processing
-      console.log('📄 Processing document:', file.name);
-      this.showToast('Document uploaded successfully!', 'success');
+      console.log('📄 Processing document:', file.name, file.type);
+      this.showToast(`Processing ${file.name}...`, 'info');
+      
+      if (file.type === 'application/pdf') {
+        // Process PDF using pdfjs-dist with enhanced error handling
+        this.showToast('Extracting text from PDF...', 'info');
+        extractedText = await this.extractPdfContent(file);
+        
+        if (extractedText.startsWith('[PDF Content Extraction Failed:')) {
+          // PDF extraction failed, but we got a fallback message
+          this.showToast('PDF extraction failed, but document was processed', 'warning');
+        } else {
+          this.showToast('PDF text extracted successfully!', 'success');
+        }
+        
+        extractedData = this.analyzeResumeContent(extractedText);
+        
+      } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+        // Process DOCX using mammoth with enhanced error handling
+        this.showToast('Extracting text from DOCX...', 'info');
+        const result = await this.extractDocxContent(file);
+        extractedText = result.value;
+        
+        if (extractedText.startsWith('[DOCX Content Extraction Failed:')) {
+          // DOCX extraction failed, but we got a fallback message
+          this.showToast('DOCX extraction failed, but document was processed', 'warning');
+        } else {
+          this.showToast('DOCX text extracted successfully!', 'success');
+        }
+        
+        extractedData = this.analyzeResumeContent(extractedText);
+        
+      } else {
+        throw new Error(`Unsupported file type: ${file.type}`);
+      }
+      
+      // Store processed document (with error handling built in)
+      this.showToast('Analyzing document content...', 'info');
+      await this.storeProcessedDocument(file.name, extractedText, extractedData);
+      
+      // Update UI with analysis
+      this.displayDocumentAnalysis(extractedData);
+      
+      // Final success message with details
+      const wordCount = extractedText.split(/\s+/).filter(word => word.length > 0).length;
+      const skillsCount = extractedData.skills?.length || 0;
+      const experienceCount = extractedData.experience?.length || 0;
+      
+      this.showToast(
+        `✅ Document processed successfully!\n\n` +
+        `📊 ${wordCount} words extracted\n` +
+        `💼 ${skillsCount} skills identified\n` +
+        `🎯 ${experienceCount} experience entries found`, 
+        'success'
+      );
+      
     } catch (error) {
-      console.error('Document processing error:', error);
-      this.showToast('Failed to process document', 'error');
+      console.error('❌ Document processing error:', error);
+      
+      let errorMessage = 'Failed to process document';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      // Show user-friendly error with suggestions
+      this.showToast(
+        `❌ Document Processing Failed\n\n` +
+        `Error: ${errorMessage}\n\n` +
+        `💡 Suggestions:\n` +
+        `• Ensure the file is not corrupted\n` +
+        `• Try a smaller file size\n` +
+        `• Convert to a different format (PDF ↔ DOCX)\n` +
+        `• Check your internet connection`, 
+        'error'
+      );
+      
+      // Still try to store basic file info even if processing failed
+      const basicData = {
+        skills: [],
+        experience: [],
+        education: [],
+        certifications: [],
+        contact: {},
+        summary: `Processing failed for ${file.name}: ${errorMessage}`
+      };
+      
+      await this.storeProcessedDocument(file.name, `[Processing failed: ${errorMessage}]`, basicData);
+      this.displayDocumentAnalysis(basicData);
     }
+  }
+
+  /**
+   * Extract content from PDF using pdfjs-dist with enhanced error handling
+   */
+  private async extractPdfContent(file: File): Promise<string> {
+    try {
+      console.log('📄 Starting PDF extraction for:', file.name);
+      
+      // Validate file size (50MB max for PDF processing)
+      if (file.size > 50 * 1024 * 1024) {
+        throw new Error('PDF file too large (max 50MB)');
+      }
+      
+      // Dynamically load PDF.js from CDN with timeout
+      const pdfjsLib = await Promise.race([
+        this.loadPdfJsLibrary(),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('PDF.js library load timeout')), 10000)
+        )
+      ]) as any;
+      
+      console.log('📦 PDF.js library loaded successfully');
+      
+      const arrayBuffer = await file.arrayBuffer();
+      console.log('📄 File converted to ArrayBuffer, size:', arrayBuffer.byteLength);
+      
+      // Add loading task options for better compatibility
+      const loadingTask = pdfjsLib.getDocument({
+        data: arrayBuffer,
+        verbosity: 0, // Reduce console output
+        disableAutoFetch: true,
+        disableStream: true,
+        disableRange: true
+      });
+      
+      const pdf = await loadingTask.promise;
+      console.log('📖 PDF loaded, pages:', pdf.numPages);
+      
+      let fullText = '';
+      const maxPages = Math.min(pdf.numPages, 20); // Limit to 20 pages for performance
+      
+      // Extract text from each page
+      for (let i = 1; i <= maxPages; i++) {
+        try {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items
+            .map((item: any) => item.str || '')
+            .join(' ');
+          
+          if (pageText.trim()) {
+            fullText += pageText + '\n\n';
+          }
+          
+          console.log(`📄 Extracted text from page ${i}/${maxPages}`);
+        } catch (pageError) {
+          console.warn(`⚠️ Failed to extract page ${i}:`, pageError);
+          fullText += `[Page ${i} extraction failed]\n\n`;
+        }
+      }
+      
+      if (pdf.numPages > 20) {
+        fullText += `\n[Note: Document has ${pdf.numPages} pages, only first 20 processed for performance]`;
+      }
+      
+      // Clean up the extracted text
+      fullText = fullText
+        .replace(/\s+/g, ' ')  // Normalize whitespace
+        .replace(/\n\s*\n/g, '\n')  // Remove empty lines
+        .trim();
+      
+      if (!fullText || fullText.length < 10) {
+        throw new Error('No readable text found in PDF');
+      }
+      
+      console.log('✅ PDF extraction successful, text length:', fullText.length);
+      return fullText;
+      
+    } catch (error) {
+      console.error('❌ PDF extraction error:', error);
+      
+      // Provide helpful error messages
+      let errorMessage = 'Failed to extract PDF content';
+      if (error instanceof Error) {
+        if (error.message.includes('Invalid PDF')) {
+          errorMessage = 'Invalid or corrupted PDF file';
+        } else if (error.message.includes('timeout')) {
+          errorMessage = 'PDF processing timeout - file may be too complex';
+        } else if (error.message.includes('too large')) {
+          errorMessage = error.message;
+        } else {
+          errorMessage = `PDF processing error: ${error.message}`;
+        }
+      }
+      
+      // Return a fallback message instead of throwing
+      return `[PDF Content Extraction Failed: ${errorMessage}]\n\nFilename: ${file.name}\nSize: ${(file.size / 1024 / 1024).toFixed(2)} MB\n\nPlease try with a different PDF file or convert to DOCX format.`;
+    }
+  }
+
+  /**
+   * Load PDF.js library dynamically
+   */
+  private async loadPdfJsLibrary(): Promise<any> {
+    return new Promise((resolve, reject) => {
+      if ((window as any).pdfjsLib) {
+        resolve((window as any).pdfjsLib);
+        return;
+      }
+      
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+      script.onload = () => {
+        const pdfjsLib = (window as any).pdfjsLib;
+        if (pdfjsLib) {
+          pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+          resolve(pdfjsLib);
+        } else {
+          reject(new Error('PDF.js failed to load'));
+        }
+      };
+      script.onerror = () => reject(new Error('Failed to load PDF.js'));
+      document.head.appendChild(script);
+    });
+  }
+
+  /**
+   * Extract content from DOCX using mammoth with enhanced error handling
+   */
+  private async extractDocxContent(file: File): Promise<{ value: string; messages: any[] }> {
+    try {
+      console.log('📄 Starting DOCX extraction for:', file.name);
+      
+      // Validate file size (20MB max for DOCX processing)
+      if (file.size > 20 * 1024 * 1024) {
+        throw new Error('DOCX file too large (max 20MB)');
+      }
+      
+      const arrayBuffer = await file.arrayBuffer();
+      console.log('📄 File converted to ArrayBuffer, size:', arrayBuffer.byteLength);
+      
+      // Try to use mammoth library
+      try {
+        // Dynamically import mammoth
+        const mammoth = await import('mammoth');
+        console.log('📦 Mammoth library loaded successfully');
+        
+        const result = await mammoth.extractRawText({ arrayBuffer });
+        console.log('✅ DOCX extraction successful, text length:', result.value.length);
+        
+        if (!result.value || result.value.trim().length < 10) {
+          throw new Error('No readable text found in DOCX');
+        }
+        
+        return result;
+        
+      } catch (importError) {
+        console.warn('⚠️ Mammoth library not available, trying fallback method');
+        
+        // Fallback: Try to extract as zip and read document.xml
+        const fallbackText = await this.extractDocxFallback(arrayBuffer);
+        return { 
+          value: fallbackText, 
+          messages: [{ type: 'warning', message: 'Used fallback extraction method' }] 
+        };
+      }
+      
+    } catch (error) {
+      console.error('❌ DOCX extraction error:', error);
+      
+      let errorMessage = 'Failed to extract DOCX content';
+      if (error instanceof Error) {
+        if (error.message.includes('too large')) {
+          errorMessage = error.message;
+        } else if (error.message.includes('Invalid')) {
+          errorMessage = 'Invalid or corrupted DOCX file';
+        } else {
+          errorMessage = `DOCX processing error: ${error.message}`;
+        }
+      }
+      
+      // Return fallback result instead of throwing
+      const fallbackText = `[DOCX Content Extraction Failed: ${errorMessage}]\n\nFilename: ${file.name}\nSize: ${(file.size / 1024 / 1024).toFixed(2)} MB\n\nPlease try with a different DOCX file or convert to PDF format.`;
+      
+      return { 
+        value: fallbackText, 
+        messages: [{ type: 'error', message: errorMessage }] 
+      };
+    }
+  }
+
+  /**
+   * Fallback DOCX extraction method (basic text extraction)
+   */
+  private async extractDocxFallback(arrayBuffer: ArrayBuffer): Promise<string> {
+    try {
+      // Convert ArrayBuffer to text and try to extract readable content
+      const uint8Array = new Uint8Array(arrayBuffer);
+      const text = new TextDecoder('utf-8', { fatal: false }).decode(uint8Array);
+      
+      // Look for XML content patterns in DOCX
+      const xmlMatches = text.match(/<w:t[^>]*>([^<]+)<\/w:t>/g);
+      if (xmlMatches && xmlMatches.length > 0) {
+        const extractedText = xmlMatches
+          .map(match => match.replace(/<[^>]*>/g, ''))
+          .join(' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+        
+        if (extractedText.length > 10) {
+          console.log('✅ Fallback DOCX extraction successful');
+          return extractedText;
+        }
+      }
+      
+      // If XML extraction fails, try to find any readable text
+      const readableText = text
+        .replace(/[^\x20-\x7E\n\r\t]/g, ' ') // Keep only printable ASCII
+        .replace(/\s+/g, ' ')
+        .split(' ')
+        .filter(word => word.length > 2 && /[a-zA-Z]/.test(word))
+        .join(' ')
+        .trim();
+      
+      if (readableText.length > 50) {
+        console.log('⚠️ Basic text extraction from DOCX');
+        return readableText.slice(0, 5000); // Limit to 5000 chars
+      }
+      
+      throw new Error('No readable content found using fallback method');
+      
+    } catch (error) {
+      console.error('❌ Fallback DOCX extraction failed:', error);
+      throw new Error('All DOCX extraction methods failed');
+    }
+  }
+
+  /**
+   * Analyze resume content for skills, experience, education
+   */
+  private analyzeResumeContent(text: string): any {
+    const analysis = {
+      skills: this.extractSkills(text),
+      experience: this.extractExperience(text),
+      education: this.extractEducation(text),
+      certifications: this.extractCertifications(text),
+      contact: this.extractContactInfo(text),
+      summary: this.generateDocumentSummary(text)
+    };
+    
+    return analysis;
+  }
+
+  /**
+   * Extract skills from resume text
+   */
+  private extractSkills(text: string): string[] {
+    const skillPatterns = [
+      /(?:skills?|technologies|tools|programming|software|languages?):\s*(.+)/gi,
+      /(?:proficient|experienced|skilled)\s+(?:in|with)\s+(.+)/gi,
+      /(?:javascript|python|java|react|angular|vue|node\.?js|typescript|html|css|sql|aws|docker|kubernetes)/gi
+    ];
+    
+    const skills = new Set<string>();
+    
+    skillPatterns.forEach(pattern => {
+      const matches = text.matchAll(pattern);
+      for (const match of matches) {
+        if (match[1]) {
+          // Split by common delimiters and clean up
+          match[1].split(/[,;\n|]/).forEach(skill => {
+            const cleanSkill = skill.trim().replace(/[^\w\s.+-]/g, '');
+            if (cleanSkill.length > 2 && cleanSkill.length < 30) {
+              skills.add(cleanSkill);
+            }
+          });
+        } else if (match[0]) {
+          skills.add(match[0].trim());
+        }
+      }
+    });
+    
+    return Array.from(skills).slice(0, 20); // Limit to top 20
+  }
+
+  /**
+   * Extract experience information
+   */
+  private extractExperience(text: string): any[] {
+    const experiencePatterns = [
+      /(?:(\d{4})\s*[-–]\s*(?:(\d{4})|present|current))\s*(.+?)(?=\d{4}|$)/gis,
+      /(?:work|employment|professional)\s+(?:experience|history):\s*(.+?)(?=education|skills|$)/gis
+    ];
+    
+    const experiences = [];
+    
+    experiencePatterns.forEach(pattern => {
+      const matches = text.matchAll(pattern);
+      for (const match of matches) {
+        if (match[1] && match[3]) {
+          experiences.push({
+            startYear: match[1],
+            endYear: match[2] || 'Present',
+            description: match[3].trim().slice(0, 200)
+          });
+        }
+      }
+    });
+    
+    return experiences.slice(0, 10);
+  }
+
+  /**
+   * Extract education information
+   */
+  private extractEducation(text: string): any[] {
+    const educationPatterns = [
+      /(?:bachelor|master|phd|doctorate|degree|university|college|academy)\s+(.+?)(?=\d{4}|work|experience|skills|$)/gis,
+      /(?:education|academic)\s+(?:background|history):\s*(.+?)(?=work|experience|skills|$)/gis
+    ];
+    
+    const education = [];
+    
+    educationPatterns.forEach(pattern => {
+      const matches = text.matchAll(pattern);
+      for (const match of matches) {
+        if (match[1]) {
+          education.push({
+            description: match[1].trim().slice(0, 150)
+          });
+        }
+      }
+    });
+    
+    return education.slice(0, 5);
+  }
+
+  /**
+   * Extract certifications
+   */
+  private extractCertifications(text: string): string[] {
+    const certPatterns = [
+      /(?:certification|certificate|certified)(?:\s+(?:in|of|for))?\s*(.+?)(?=\n|$)/gis,
+      /(?:aws|azure|google|microsoft|cisco|oracle|salesforce|scrum|pmp|comptia)\s+certified/gis
+    ];
+    
+    const certifications = new Set<string>();
+    
+    certPatterns.forEach(pattern => {
+      const matches = text.matchAll(pattern);
+      for (const match of matches) {
+        if (match[1]) {
+          certifications.add(match[1].trim().slice(0, 50));
+        } else if (match[0]) {
+          certifications.add(match[0].trim());
+        }
+      }
+    });
+    
+    return Array.from(certifications).slice(0, 10);
+  }
+
+  /**
+   * Extract contact information
+   */
+  private extractContactInfo(text: string): any {
+    return {
+      email: text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/)?.[0] || '',
+      phone: text.match(/(?:\+?1[-.\s]?)?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}/)?.[0] || '',
+      linkedin: text.match(/linkedin\.com\/(?:in\/)?([a-zA-Z0-9-]+)/)?.[0] || '',
+      github: text.match(/github\.com\/([a-zA-Z0-9-]+)/)?.[0] || ''
+    };
+  }
+
+  /**
+   * Generate document summary
+   */
+  private generateDocumentSummary(text: string): string {
+    // Extract first few sentences or key summary section
+    const summaryPatterns = [
+      /(?:summary|profile|objective|about)\s*:?\s*(.+?)(?=(?:experience|skills|education)|$)/gis,
+      /^(.{100,300}?)(?:\.|$)/s
+    ];
+    
+    for (const pattern of summaryPatterns) {
+      const match = text.match(pattern);
+      if (match && match[1]) {
+        return match[1].trim().slice(0, 300);
+      }
+    }
+    
+    return text.slice(0, 200) + '...';
+  }
+
+  /**
+   * Store processed document in storage with error handling
+   */
+  private async storeProcessedDocument(filename: string, content: string, analysis: any): Promise<void> {
+    try {
+      const documentData = {
+        filename,
+        content,
+        analysis,
+        processedAt: new Date().toISOString(),
+        wordCount: content.split(/\s+/).length
+      };
+      
+      // Try Chrome storage first, fall back to localStorage
+      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+        const result = await chrome.storage.local.get('processedDocuments');
+        const documents = result.processedDocuments || [];
+        documents.push(documentData);
+        
+        // Keep only last 10 documents
+        if (documents.length > 10) {
+          documents.splice(0, documents.length - 10);
+        }
+        
+        await chrome.storage.local.set({ processedDocuments: documents });
+        console.log('✅ Document stored in Chrome storage');
+      } else {
+        // Fallback to localStorage
+        const existingDocs = JSON.parse(localStorage.getItem('processedDocuments') || '[]');
+        existingDocs.push(documentData);
+        
+        // Keep only last 10 documents
+        if (existingDocs.length > 10) {
+          existingDocs.splice(0, existingDocs.length - 10);
+        }
+        
+        localStorage.setItem('processedDocuments', JSON.stringify(existingDocs));
+        console.log('✅ Document stored in localStorage');
+      }
+    } catch (error) {
+      console.error('❌ Error storing document:', error);
+      // Don't throw error - just log it and continue
+    }
+  }
+
+  /**
+   * Display document analysis in UI
+   */
+  private displayDocumentAnalysis(analysis: any): void {
+    const analysisContainer = document.getElementById('document-analysis');
+    if (!analysisContainer) return;
+    
+    analysisContainer.innerHTML = `
+      <div class="ca-analysis">
+        <h4>📄 Document Analysis</h4>
+        
+        <div class="ca-analysis__section">
+          <h5>💼 Skills (${analysis.skills.length})</h5>
+          <div class="ca-tags">
+            ${analysis.skills.slice(0, 10).map((skill: string) => 
+              `<span class="ca-tag">${skill}</span>`
+            ).join('')}
+          </div>
+        </div>
+        
+        <div class="ca-analysis__section">
+          <h5>🎯 Experience (${analysis.experience.length} entries)</h5>
+          ${analysis.experience.slice(0, 3).map((exp: any) => 
+            `<div class="ca-experience">${exp.startYear} - ${exp.endYear}: ${exp.description.slice(0, 100)}...</div>`
+          ).join('')}
+        </div>
+        
+        <div class="ca-analysis__section">
+          <h5>🎓 Education</h5>
+          ${analysis.education.slice(0, 2).map((edu: any) => 
+            `<div class="ca-education">${edu.description}</div>`
+          ).join('')}
+        </div>
+        
+        <div class="ca-analysis__section">
+          <h5>📜 Certifications (${analysis.certifications.length})</h5>
+          <div class="ca-tags">
+            ${analysis.certifications.slice(0, 5).map((cert: string) => 
+              `<span class="ca-tag ca-tag--cert">${cert}</span>`
+            ).join('')}
+          </div>
+        </div>
+        
+        <div class="ca-analysis__section">
+          <h5>📞 Contact</h5>
+          <div class="ca-contact">
+            ${analysis.contact.email ? `<div>✉️ ${analysis.contact.email}</div>` : ''}
+            ${analysis.contact.phone ? `<div>📱 ${analysis.contact.phone}</div>` : ''}
+            ${analysis.contact.linkedin ? `<div>💼 ${analysis.contact.linkedin}</div>` : ''}
+            ${analysis.contact.github ? `<div>🐙 ${analysis.contact.github}</div>` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+    
+    analysisContainer.style.display = 'block';
   }
 
   /**
@@ -1266,7 +1831,16 @@ class OptionsController {
    * Initialize the options page
    */
   public initialize(): void {
-    console.log('CandidAI Options page initialized');
+    console.log('🚀 CandidAI Options page initialized');
+    
+    // Initialize core functionality
+    this.initializeEventListeners();
+    this.initializeNavigation();
+    this.initializeDocumentUpload();
+    this.initializeLLMReordering();
+    
+    // Load existing configuration
+    this.loadConfiguration();
   }
 }
 

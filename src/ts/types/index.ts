@@ -50,15 +50,18 @@ export interface MessageResponse {
 
 export type DocumentType = 'resume' | 'cover_letter' | 'portfolio' | 'reference' | 'presentation' | 'proposal' | 'case_study' | 'pricing' | 'other';
 
-export type PriorityLevel = 'low' | 'medium' | 'high' | 'urgent' | 'critical';
+export type PriorityLevel = 'low' | 'medium' | 'high' | 'urgent' | 'critical' | 'background';
 
 export interface DocumentContent {
+  id: string;
   text: string;
   metadata: DocumentMetadata;
   chunks: DocumentChunk[];
   entities: ExtractedEntity[];
   keywords: string[];
   summary: string;
+  keyPoints: string[];
+  structuredData: Record<string, any>;
   processedAt: Date;
 }
 
@@ -94,6 +97,7 @@ export interface SuggestionContext {
   conversationHistory: string[];
   participants: Participant[];
   meetingPhase: string;
+  participantContext?: Record<string, any>;
 }
 
 export interface ContextUpdate {
@@ -114,6 +118,7 @@ export interface PerformanceReport {
   events: PerformanceEvent[];
   interviews: Interview[];
   generatedAt: Date;
+  startTime?: Date;
 }
 
 export interface SuggestionEntry {
@@ -139,6 +144,7 @@ export interface Interview {
 }
 
 export interface InterviewTranscription extends TranscriptionData {
+  confidence: number;
   isQuestion?: boolean;
 }
 
@@ -353,6 +359,7 @@ export interface LLMRequest {
   stream?: boolean;
   tools?: any[] | null;
   callType?: CallType;
+  tone?: ToneType;
 }
 
 export interface LLMResponse {
@@ -363,6 +370,7 @@ export interface LLMResponse {
   metadata?: Record<string, unknown>;
   provider?: string;
   text?: string;
+  isStream?: boolean;
 }
 
 export interface TokenUsage {
@@ -370,6 +378,7 @@ export interface TokenUsage {
   completionTokens: number;
   totalTokens: number;
   model?: string;
+  estimatedCost?: number;
 }
 
 // =============================================================================
@@ -530,6 +539,7 @@ export interface MeetingControlsState {
   tone: string;
   documentsLoaded: number;
   aiEnabled?: boolean;
+  confidentialityLevel?: 'public' | 'internal' | 'confidential' | 'restricted';
 }
 
 export interface DocumentUploadState {
@@ -538,17 +548,19 @@ export interface DocumentUploadState {
   error: string | null;
   errors?: string[];
   uploading?: boolean;
+  processed?: number;
 }
 
 export interface DocumentMetadata {
   id: string;
   name: string;
   size: number;
-  type: string;
+  type: DocumentType;
   format: string;
   uploadDate: Date;
   priority: PriorityLevel;
   lastModified?: Date;
+  tags?: string[];
 }
 
 export interface MeetingContext {
