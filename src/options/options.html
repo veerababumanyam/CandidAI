@@ -243,12 +243,19 @@
                 <svg class="ca-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                   <polyline points="3 6 5 6 21 6" />
                   <path
-                    d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                    d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2 2h4a2 2 0 0 1 2 2v2"
                   />
                 </svg>
               </button>
             </div>
+
+            <!-- Processing Status -->
+            <div id="processing-status" class="ca-processing-status" style="display: none">
+              <div class="ca-loading-spinner"></div>
+              <span class="ca-processing-text">Processing document...</span>
+            </div>
           </div>
+
           <div class="ca-form-group">
             <h3 class="ca-subsection__title">Job Description</h3>
             <textarea
@@ -260,6 +267,122 @@
             <p class="ca-help-text">
               This helps CandidAI tailor suggestions to the specific role requirements
             </p>
+          </div>
+
+          <!-- Document Extraction Results -->
+          <div id="document-extraction" class="ca-form-group" style="display: none">
+            <h3 class="ca-subsection__title">
+              Extracted Document Content
+              <span class="ca-extraction-status" id="extraction-status"></span>
+            </h3>
+            <p class="ca-help-text">
+              Review and edit the extracted content below. This information will be used for AI suggestions.
+            </p>
+            
+            <!-- Contact Information -->
+            <div class="ca-extraction-section">
+              <h4 class="ca-extraction-title">Contact Information</h4>
+              <div class="ca-extraction-grid">
+                <div class="ca-form-group">
+                  <label for="extracted-email" class="ca-label">Email</label>
+                  <input type="email" id="extracted-email" class="ca-input" readonly />
+                </div>
+                <div class="ca-form-group">
+                  <label for="extracted-phone" class="ca-label">Phone</label>
+                  <input type="tel" id="extracted-phone" class="ca-input" readonly />
+                </div>
+                <div class="ca-form-group">
+                  <label for="extracted-linkedin" class="ca-label">LinkedIn</label>
+                  <input type="url" id="extracted-linkedin" class="ca-input" readonly />
+                </div>
+                <div class="ca-form-group">
+                  <label for="extracted-github" class="ca-label">GitHub</label>
+                  <input type="url" id="extracted-github" class="ca-input" readonly />
+                </div>
+              </div>
+            </div>
+
+            <!-- Skills -->
+            <div class="ca-extraction-section">
+              <h4 class="ca-extraction-title">Skills & Technologies</h4>
+              <div id="extracted-skills" class="ca-skills-container"></div>
+              <textarea 
+                id="skills-editor" 
+                class="ca-textarea" 
+                rows="3" 
+                placeholder="Add or edit skills (comma-separated)..."
+              ></textarea>
+            </div>
+
+            <!-- Experience -->
+            <div class="ca-extraction-section">
+              <h4 class="ca-extraction-title">Professional Experience</h4>
+              <textarea 
+                id="experience-editor" 
+                class="ca-textarea" 
+                rows="6" 
+                placeholder="Edit your professional experience..."
+              ></textarea>
+            </div>
+
+            <!-- Education -->
+            <div class="ca-extraction-section">
+              <h4 class="ca-extraction-title">Education & Certifications</h4>
+              <textarea 
+                id="education-editor" 
+                class="ca-textarea" 
+                rows="4" 
+                placeholder="Edit your education and certifications..."
+              ></textarea>
+            </div>
+
+            <!-- Full Document Text -->
+            <div class="ca-extraction-section">
+              <h4 class="ca-extraction-title">
+                Complete Document Text
+                <button id="toggle-full-text" class="ca-btn ca-btn--small ca-btn--secondary">Show Full Text</button>
+              </h4>
+              <textarea 
+                id="full-text-editor" 
+                class="ca-textarea ca-full-text" 
+                rows="10" 
+                style="display: none"
+                placeholder="Complete extracted text for review..."
+              ></textarea>
+              <div class="ca-text-stats" id="text-stats" style="display: none">
+                <span class="ca-stat">Characters: <span id="char-count">0</span></span>
+                <span class="ca-stat">Words: <span id="word-count">0</span></span>
+                <span class="ca-stat">Lines: <span id="line-count">0</span></span>
+              </div>
+            </div>
+
+            <!-- Extraction Quality Score -->
+            <div class="ca-extraction-quality">
+              <h4 class="ca-extraction-title">Extraction Quality</h4>
+              <div class="ca-quality-metrics">
+                <div class="ca-metric">
+                  <span class="ca-metric-label">Contact Info:</span>
+                  <div class="ca-score-bar">
+                    <div class="ca-score-fill" id="contact-score"></div>
+                  </div>
+                  <span class="ca-score-text" id="contact-score-text">-/5</span>
+                </div>
+                <div class="ca-metric">
+                  <span class="ca-metric-label">Skills:</span>
+                  <div class="ca-score-bar">
+                    <div class="ca-score-fill" id="skills-score"></div>
+                  </div>
+                  <span class="ca-score-text" id="skills-score-text">-/5</span>
+                </div>
+                <div class="ca-metric">
+                  <span class="ca-metric-label">Experience:</span>
+                  <div class="ca-score-bar">
+                    <div class="ca-score-fill" id="experience-score"></div>
+                  </div>
+                  <span class="ca-score-text" id="experience-score-text">-/5</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="ca-button-group">

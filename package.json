@@ -1,6 +1,6 @@
 {
   "name": "candidai-chrome-extension",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "AI-powered interview assistance Chrome extension with advanced LLM integration",
   "author": "Veera Babu Manyam <veera@sawas.org>",
   "license": "Apache-2.0",

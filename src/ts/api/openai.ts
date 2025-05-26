@@ -194,7 +194,9 @@ export class OpenAIProvider extends BaseLLMProvider {
           provider: 'openai',
           model,
           isStream: true,
-          stream: this.handleStreamResponse(response as any),
+          content: '',
+          usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+          finishReason: 'stop'
         };
       } else {
         return this.formatResponse(response, model);
@@ -256,25 +258,21 @@ export class OpenAIProvider extends BaseLLMProvider {
 
     return {
       content: choice.message?.content || '',
-      role: choice.message?.role || 'assistant',
-      functionCall: choice.message?.function_call,
-      finishReason: choice.finish_reason || 'unknown',
       usage: {
         promptTokens: response.usage?.prompt_tokens || 0,
         completionTokens: response.usage?.completion_tokens || 0,
         totalTokens: response.usage?.total_tokens || 0,
-        model,
-        estimatedCost: this.calculateCost({
-          promptTokens: response.usage?.prompt_tokens || 0,
-          completionTokens: response.usage?.completion_tokens || 0,
-          totalTokens: response.usage?.total_tokens || 0,
-        }, model),
+        model: response.model || model
+      },
+      model: response.model || model,
+      finishReason: choice.finish_reason || 'stop',
+      metadata: {
+        id: response.id,
+        created: response.created,
+        object: response.object
       },
       provider: 'openai',
-      model,
-      id: response.id,
-      created: response.created,
-      choices: response.choices,
+      isStream: false
     };
   }
 
@@ -350,15 +348,16 @@ export class OpenAIProvider extends BaseLLMProvider {
       const response = await this.generateCompletion({
         prompt: 'Hello',
         context: {
-          currentTopic: 'test',
+          sessionId: 'default',
+          callType: 'interview',
+          tone: 'professional',
+          currentTopic: 'general',
           conversationHistory: [],
           relevantDocuments: [],
-          participantContext: {},
-          meetingPhase: 'opening'
+          participants: [],
+          meetingPhase: 'discussion',
+          participantContext: {}
         },
-        callType: 'interview',
-        tone: 'professional',
-        model: 'gpt-3.5-turbo',
         maxTokens: 10,
       });
 
@@ -403,15 +402,16 @@ export class OpenAIProvider extends BaseLLMProvider {
       const response = await this.generateCompletion({
         prompt: 'Hello',
         context: {
-          currentTopic: 'test',
+          sessionId: 'default',
+          callType: 'interview',
+          tone: 'professional',
+          currentTopic: 'general',
           conversationHistory: [],
           relevantDocuments: [],
-          participantContext: {},
-          meetingPhase: 'opening'
+          participants: [],
+          meetingPhase: 'discussion',
+          participantContext: {}
         },
-        callType: 'interview',
-        tone: 'professional',
-        model: 'gpt-3.5-turbo',
         maxTokens: 10,
       });
 

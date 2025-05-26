@@ -109,11 +109,12 @@ export class MeetingControls {
     };
 
     this.uploadState = {
-      uploading: false,
-      processed: 0,
-      total: 0,
+      isUploading: false,
+      uploadProgress: 0,
+      error: null,
       errors: [],
-      progress: 0
+      processed: 0,
+      total: 0
     };
   }
 
@@ -593,11 +594,12 @@ export class MeetingControls {
    */
   private async uploadDocuments(files: FileList): Promise<void> {
     this.uploadState = {
-      uploading: true,
-      processed: 0,
-      total: files.length,
+      isUploading: true,
+      uploadProgress: 0,
+      error: null,
       errors: [],
-      progress: 0
+      processed: 0,
+      total: files.length
     };
 
     this.showUploadProgress();
@@ -605,7 +607,7 @@ export class MeetingControls {
     try {
       const result = await this.documentManager.uploadDocuments(
         files,
-        this.currentState.callType,
+        this.currentState.callType as CallType,
         this.sessionId
       );
 
@@ -620,7 +622,7 @@ export class MeetingControls {
       if (result.errors.length > 0) {
         this.uploadState = {
           ...this.uploadState,
-          errors: result.errors
+          errors: [...result.errors]
         };
         this.showUploadErrors(result.errors);
       }
@@ -631,10 +633,11 @@ export class MeetingControls {
       console.error('Document upload failed:', error);
       this.updateStatus('Document upload failed', 'error');
     } finally {
-      this.uploadState = {
-        ...this.uploadState,
-        uploading: false
-      };
+      this.updateUploadState({
+        isUploading: false,
+        uploadProgress: 100,
+        error: null
+      });
       this.hideUploadProgress();
     }
   }
@@ -778,4 +781,10 @@ export class MeetingControls {
   private handleAIToggle(input: HTMLInputElement): void { /* AI toggle logic */ }
   private async startMeeting(): Promise<void> { /* Meeting start logic */ }
   private async testCurrentSettings(): Promise<void> { /* Settings test logic */ }
+  private updateUploadState(state: Partial<DocumentUploadState>): void {
+    this.uploadState = {
+      ...this.uploadState,
+      ...state
+    };
+  }
 } 

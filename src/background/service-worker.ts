@@ -15,19 +15,19 @@ import type {
   ChromeTab,
   ChromeSender,
   ChromePort,
-  ContextUpdate,
   PlatformDetection,
   PerformanceMetrics,
   DocumentContent,
   PriorityLevel,
   CallType,
-  ToneType
+  ToneType,
+  DocumentMetadata
 } from '../ts/types/index';
 
 import { MessageBroker } from '@utils/messaging';
 import { SecureStorage } from '@utils/storage';
 import { LLMOrchestrator } from '@services/llmOrchestrator';
-import { ContextManager } from '@services/contextManager';
+import { ContextManager, type ContextUpdate } from '@services/contextManager';
 import { PerformanceAnalyzer } from '@services/performanceAnalyzer';
 import {
   MESSAGE_COMMANDS,
@@ -38,6 +38,7 @@ import {
   MESSAGE_TARGETS,
   STORAGE_KEYS,
   PORT_COMMANDS,
+  PRIORITY_LEVELS
 } from '@utils/constants';
 
 /**
@@ -234,13 +235,9 @@ class ServiceWorkerOrchestrator {
           };
           const contextUpdate: ContextUpdate = {
             sessionId: contextPayload.sessionId ?? '',
-            transcription: {
-              text: contextPayload.transcription?.text ?? '',
-              confidence: contextPayload.transcription?.confidence ?? 0,
-              timestamp: contextPayload.transcription?.timestamp ?? new Date(),
-              isInterim: contextPayload.transcription?.isInterim ?? false
-            },
-            timestamp: new Date()
+            transcription: contextPayload.transcription?.text ?? '',
+            isQuestion: contextPayload.transcription?.isInterim ?? false,
+            speaker: 'user'
           };
           await this.contextManager.updateContext(contextUpdate);
           break;
@@ -260,14 +257,20 @@ class ServiceWorkerOrchestrator {
         case MESSAGE_COMMANDS.INIT_INTERVIEW_SESSION:
           responseData = await this.initializeInterviewSession(
             payload?.metadata,
-            payload?.tabId,
+            typeof payload?.tabId === 'number' ? payload.tabId : undefined,
           );
           break;
 
         case MESSAGE_COMMANDS.PROCESS_TRANSCRIPTION:
           responseData = await this.processTranscription(
-            payload?.sessionId,
-            payload?.transcriptionData,
+            typeof payload?.sessionId === 'string' ? payload.sessionId : '',
+            (payload?.transcriptionData as TranscriptionData) || {
+              text: '',
+              confidence: 0,
+              timestamp: new Date(),
+              isInterim: false,
+              speaker: 'user'
+            },
           );
           break;
 
@@ -315,16 +318,24 @@ class ServiceWorkerOrchestrator {
    * Implements Factory and Singleton patterns for resource optimization
    */
   private async initializeOffscreenCapabilities(): Promise<void> {
-    const existingContexts = await chrome.runtime.getContexts({
-      contextTypes: ['OFFSCREEN_DOCUMENT'],
-      documentUrls: [chrome.runtime.getURL(OFFSCREEN_DOCUMENT_PATH)],
-    });
+    let existingContexts: any[] = [];
+    
+    try {
+      // Use type assertion for newer Chrome API
+      existingContexts = await (chrome.runtime as any).getContexts({
+        contextTypes: ['OFFSCREEN_DOCUMENT'],
+        documentUrls: [chrome.runtime.getURL(OFFSCREEN_DOCUMENT_PATH)],
+      });
+    } catch (error) {
+      // getContexts not available in this Chrome version
+      console.log('getContexts API not available, proceeding with offscreen creation');
+    }
 
     if (existingContexts.length === 0) {
       try {
         await chrome.offscreen.createDocument({
           url: OFFSCREEN_DOCUMENT_PATH,
-          reasons: OFFSCREEN_REASONS,
+          reasons: [...OFFSCREEN_REASONS] as chrome.offscreen.Reason[],
           justification: OFFSCREEN_JUSTIFICATION,
         });
         console.log('Offscreen document created successfully.');
@@ -403,7 +414,9 @@ class ServiceWorkerOrchestrator {
         `Failed to send START_AUDIO_CAPTURE to offscreen for session ${sessionId}:`,
         error,
       );
-      this.performanceAnalyzer.logError('start_audio_capture_failed', { sessionId, error });
+      this.performanceAnalyzer.logError('start_audio_capture_failed', error instanceof Error ? error : new Error('Audio capture failed'), { 
+        sessionId
+      });
       session.state = 'paused'; // Set to paused instead of active if audio fails
     }
 
@@ -504,9 +517,10 @@ class ServiceWorkerOrchestrator {
       metadata: {
         callType: 'interview',
         responseType: 'answer',
-        priority: 'medium',
+        priority: PRIORITY_LEVELS.MEDIUM,
         timing: 'immediate',
         length: 'brief',
+        formality: 'professional',
       },
     };
   }
@@ -541,12 +555,16 @@ class ServiceWorkerOrchestrator {
       
       // ... existing audio capture logic ...
       
+      await this.performanceAnalyzer.logEvent(
+        'audio_capture_started',
+        { tabId: Number(tabId) || 0 }
+      );
+      
       return true;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      this.performanceAnalyzer.logError('start_audio_capture_failed', { 
-        sessionId, 
-        error: errorMessage 
+      this.performanceAnalyzer.logError('start_audio_capture_failed', error instanceof Error ? error : new Error('Audio capture failed'), { 
+        sessionId
       });
       throw error;
     }
@@ -555,17 +573,24 @@ class ServiceWorkerOrchestrator {
   private async stopAudioCapture(tabId: number, sessionId: string): Promise<boolean> {
     // Implementation needed
     console.log('Stopping audio capture:', tabId, sessionId);
+    await this.performanceAnalyzer.logEvent(
+      'audio_capture_stopped',
+      { tabId: Number(tabId) || 0 }
+    );
     return true;
   }
 
   private async ensureOffscreenDocument(): Promise<void> {
     try {
       // Check if offscreen document already exists
-      const contexts = await chrome.runtime.getContexts?.({
-        contextTypes: ['OFFSCREEN_DOCUMENT']
-      });
+      let existingContexts: any[] = [];
+      if ((chrome.runtime as any).getContexts) {
+        existingContexts = await (chrome.runtime as any).getContexts({
+          contextTypes: ['OFFSCREEN_DOCUMENT']
+        });
+      }
       
-      if (contexts && contexts.length > 0) {
+      if (existingContexts && existingContexts.length > 0) {
         console.log('Offscreen document already exists');
         return;
       }
@@ -575,12 +600,10 @@ class ServiceWorkerOrchestrator {
     }
 
     try {
-      const OFFSCREEN_REASONS: chrome.offscreen.Reason[] = ['USER_MEDIA', 'AUDIO_PLAYBACK'];
-      
       await chrome.offscreen.createDocument({
         url: chrome.runtime.getURL('offscreen/offscreen.html'),
-        reasons: OFFSCREEN_REASONS,
-        justification: 'Audio processing and capture for interview assistance'
+        reasons: ['USER_MEDIA', 'AUDIO_PLAYBACK'] as chrome.offscreen.Reason[],
+        justification: 'Audio capture for meeting transcription'
       });
       
       console.log('Offscreen document created successfully');
@@ -631,7 +654,7 @@ class ServiceWorkerOrchestrator {
       metadata: {
         callType: context.callType,
         responseType: 'answer' as const,
-        priority: 'medium' as PriorityLevel,
+        priority: PRIORITY_LEVELS.MEDIUM,
         timing: 'immediate' as const,
         length: 'brief' as const,
         formality: 'professional' as const

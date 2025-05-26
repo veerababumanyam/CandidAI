@@ -180,7 +180,7 @@ export class GoogleMeetAdapter {
   getMeetingId() {
     // Try multiple selectors
     const meetingCodeElement = document.querySelector(this.selectors.meetingId);
-    if (meetingCodeElement) {
+    if (meetingCodeElement instanceof HTMLElement) {
       return meetingCodeElement.dataset.meetingCode;
     }
 
@@ -205,17 +205,22 @@ export class GoogleMeetAdapter {
     const participantElements = document.querySelectorAll('[data-participant-id]');
 
     participantElements.forEach((element) => {
-      const name =
-        element.querySelector('[data-name]')?.textContent ||
-        element.getAttribute('aria-label') ||
-        'Unknown';
+      const nameElement = element.querySelector('[data-name]');
+      const participantName = nameElement instanceof HTMLElement 
+        ? nameElement.dataset?.name 
+        : '';
 
-      const participantId = element.dataset.participantId;
+      const participantId = element instanceof HTMLElement
+        ? element.dataset?.participantId
+        : '';
+
       const isSelf = element.hasAttribute('data-self-participant');
 
       participants.push({
         id: participantId,
-        name: name.trim(),
+        name: nameElement instanceof HTMLElement
+          ? nameElement.dataset?.originalTitle || nameElement.textContent?.trim()
+          : '',
         isSelf,
         isMuted: element.querySelector('[data-is-muted="true"]') !== null,
       });
@@ -291,7 +296,7 @@ export class GoogleMeetAdapter {
     captionElements.forEach((element) => {
       captions.push({
         text: element.textContent,
-        speaker: element.dataset.speaker || 'Unknown',
+        speaker: element instanceof HTMLElement ? element.dataset.speaker || 'Unknown' : 'Unknown',
       });
     });
 
@@ -321,7 +326,7 @@ export class GoogleMeetAdapter {
    */
   updateMuteState() {
     const micButton = document.querySelector(this.selectors.micButton);
-    if (micButton) {
+    if (micButton instanceof HTMLElement) {
       this.state.isMuted = micButton.dataset.isMuted === 'true';
 
       // Notify extension

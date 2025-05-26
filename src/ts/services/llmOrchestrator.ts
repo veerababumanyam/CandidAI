@@ -215,8 +215,8 @@ export class LLMOrchestrator {
     const toneConfig = TONE_CONFIGS[meetingContext.tone];
 
     // Build document context
-    const documentContext = relevantDocuments.length > 0 
-      ? this.buildDocumentContext(relevantDocuments, meetingContext.callType)
+    const documentContext = relevantDocuments && relevantDocuments.length > 0
+      ? this.buildDocumentContext([...relevantDocuments], meetingContext.callType)
       : '';
 
     // Build conversation context
@@ -462,11 +462,10 @@ TONE REQUIREMENTS (${meetingContext.tone}):
       context: {} as SuggestionContext, // Will be populated properly
       callType: CALL_TYPES.CLIENT_MEETING, // Default fallback
       tone: TONE_TYPES.PROFESSIONAL, // Default fallback
-      maxTokens: generation.parameters.maxTokens,
       temperature: generation.parameters.temperature,
-      presencePenalty: generation.parameters.presencePenalty,
-      frequencyPenalty: generation.parameters.frequencyPenalty,
-      model: generation.model
+      maxTokens: generation.parameters.maxTokens,
+      model: generation.model,
+      sessionId: 'session_' + Date.now()
     };
 
     // Try primary provider
@@ -532,9 +531,18 @@ TONE REQUIREMENTS (${meetingContext.tone}):
       content,
       tone: meetingContext.tone,
       confidence: this.calculateResponseConfidence(llmResponse),
-      relevantDocuments: relevantDocuments.map(doc => doc.id),
-      supportingPoints,
-      followUpQuestions,
+      relevantDocuments: relevantDocuments.map(doc => ({
+        id: doc.id,
+        name: doc.metadata.name,
+        type: doc.metadata.format as any,
+        size: doc.metadata.size,
+        uploadedAt: doc.metadata.uploadDate,
+        content: doc.text,
+        summary: doc.summary,
+        keywords: doc.keywords
+      })),
+      supportingPoints: [...supportingPoints],
+      followUpQuestions: [...followUpQuestions],
       metadata: {
         callType: meetingContext.callType,
         responseType: 'answer',

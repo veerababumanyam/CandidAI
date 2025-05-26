@@ -194,6 +194,20 @@ export class DocumentManager {
   // =============================================================================
 
   /**
+   * Get all currently active documents in cache
+   */
+  async getActiveDocuments(): Promise<readonly DocumentContent[]> {
+    const activeDocuments: DocumentContent[] = [];
+    
+    // Get from cache first
+    for (const document of this.documentCache.values()) {
+      activeDocuments.push(document);
+    }
+    
+    return activeDocuments;
+  }
+
+  /**
    * Queue document for background processing
    */
   private async queueDocumentProcessing(
@@ -288,13 +302,15 @@ export class DocumentManager {
 
       const documentContent: DocumentContent = {
         id: queueItem.metadata.id,
-        rawText,
-        structuredData,
-        chunks,
-        extractedEntities,
+        text: rawText,
+        metadata: queueItem.metadata,
+        chunks: chunks as DocumentChunk[],
+        entities: extractedEntities as ExtractedEntity[],
+        keywords: [],
         summary,
-        keyPoints,
-        processingStatus: 'completed'
+        keyPoints: keyPoints as string[],
+        structuredData,
+        processedAt: new Date()
       };
 
       // Store document
@@ -561,16 +577,25 @@ export class DocumentManager {
    * Calculate document priority based on type and call context
    */
   private calculateDocumentPriority(type: DocumentType, callType: CallType): PriorityLevel { 
-    return 'medium' as PriorityLevel; 
+    // Return numeric priority based on document type and call context
+    if (type === DOCUMENT_TYPES.RESUME && callType === 'interview') {
+      return PRIORITY_LEVELS.HIGH;
+    }
+    if (type === DOCUMENT_TYPES.COVER_LETTER && callType === 'interview') {
+      return PRIORITY_LEVELS.MEDIUM;
+    }
+    return PRIORITY_LEVELS.MEDIUM; 
   }
 
   /**
    * Generate tags for document categorization
    */
   private generateTags(filename: string, type: DocumentType): string[] { 
-    const tags = [type];
-    if (filename.includes('senior')) tags.push('senior');
-    if (filename.includes('junior')) tags.push('junior');
+    const tags = [type as string];
+    if (filename.toLowerCase().includes('senior')) tags.push('senior');
+    if (filename.toLowerCase().includes('junior')) tags.push('junior');
+    if (filename.toLowerCase().includes('lead')) tags.push('lead');
+    if (filename.toLowerCase().includes('manager')) tags.push('manager');
     return tags;
   }
 
@@ -621,4 +646,31 @@ export class DocumentManager {
   private findMatchingChunks(document: DocumentContent, topic: string): readonly DocumentChunk[] { return []; }
   private generateRelevanceReason(document: DocumentContent, context: SuggestionContext, callType: CallType): string { return ''; }
   private async getDocumentContent(id: string): Promise<DocumentContent | undefined> { return undefined; }
+
+  // =============================================================================
+  // STORAGE METHODS
+  // =============================================================================
+
+  /**
+   * Store document metadata and content
+   */
+  private async storeDocument(metadata: DocumentMetadata, content: DocumentContent): Promise<void> {
+    try {
+      await this.storage.set(`document_${metadata.id}`, {
+        metadata,
+        content
+      });
+    } catch (error) {
+      console.error('Failed to store document:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get document metadata from cache
+   */
+  private getDocumentMetadataFromCache(documentId: string): DocumentMetadata | undefined {
+    const document = this.documentCache.get(documentId);
+    return document?.metadata;
+  }
 }

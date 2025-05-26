@@ -50,7 +50,16 @@ export interface MessageResponse {
 
 export type DocumentType = 'resume' | 'cover_letter' | 'portfolio' | 'reference' | 'presentation' | 'proposal' | 'case_study' | 'pricing' | 'other';
 
-export type PriorityLevel = 'low' | 'medium' | 'high' | 'urgent' | 'critical' | 'background';
+export const PRIORITY_LEVELS = {
+  LOW: 1,
+  MEDIUM: 2,
+  HIGH: 3,
+  URGENT: 4,
+  CRITICAL: 5,
+  BACKGROUND: 0,
+} as const;
+
+export type PriorityLevel = typeof PRIORITY_LEVELS[keyof typeof PRIORITY_LEVELS];
 
 export interface DocumentContent {
   id: string;
@@ -528,9 +537,9 @@ export interface AudioConfig {
 // SPECIFIC FEATURE TYPES
 // =============================================================================
 
-export type CallType = 'interview' | 'meeting' | 'presentation' | 'training' | 'sales_pitch' | 'sales_call' | 'client_meeting' | 'team_meeting' | 'one_on_one' | 'performance_review' | 'brainstorming';
+export type CallType = typeof CALL_TYPES[keyof typeof CALL_TYPES];
 
-export type ToneType = 'professional' | 'casual' | 'formal' | 'friendly' | 'confident' | 'consultative' | 'persuasive' | 'empathetic' | 'analytical' | 'creative' | 'diplomatic';
+export type ToneType = typeof TONE_TYPES[keyof typeof TONE_TYPES];
 
 export interface MeetingControlsState {
   isRecording: boolean;
@@ -549,6 +558,7 @@ export interface DocumentUploadState {
   errors?: string[];
   uploading?: boolean;
   processed?: number;
+  total?: number;
 }
 
 export interface DocumentMetadata {
@@ -561,6 +571,7 @@ export interface DocumentMetadata {
   priority: PriorityLevel;
   lastModified?: Date;
   tags?: string[];
+  checksum?: string;
 }
 
 export interface MeetingContext {
@@ -599,31 +610,31 @@ export interface EncryptedStorage extends StorageProvider {
 // =============================================================================
 
 export const CALL_TYPES = {
-  INTERVIEW: 'interview' as const,
-  MEETING: 'meeting' as const,
-  PRESENTATION: 'presentation' as const,
-  TRAINING: 'training' as const,
-  SALES_PITCH: 'sales_pitch' as const,
-  SALES_CALL: 'sales_call' as const,
-  CLIENT_MEETING: 'client_meeting' as const,
-  TEAM_MEETING: 'team_meeting' as const,
-  ONE_ON_ONE: 'one_on_one' as const,
-  PERFORMANCE_REVIEW: 'performance_review' as const,
-  BRAINSTORMING: 'brainstorming' as const,
+  INTERVIEW: 'interview',
+  MEETING: 'meeting',
+  PRESENTATION: 'presentation',
+  TRAINING: 'training',
+  CLIENT_MEETING: 'client_meeting',
+  SALES_PITCH: 'sales_pitch',
+  SALES_CALL: 'sales_call',
+  TEAM_MEETING: 'team_meeting',
+  ONE_ON_ONE: 'one_on_one',
+  PERFORMANCE_REVIEW: 'performance_review',
+  BRAINSTORMING: 'brainstorming'
 } as const;
 
 export const TONE_TYPES = {
-  PROFESSIONAL: 'professional' as const,
-  CASUAL: 'casual' as const,
-  FORMAL: 'formal' as const,
-  FRIENDLY: 'friendly' as const,
-  CONFIDENT: 'confident' as const,
-  CONSULTATIVE: 'consultative' as const,
-  PERSUASIVE: 'persuasive' as const,
-  EMPATHETIC: 'empathetic' as const,
-  ANALYTICAL: 'analytical' as const,
-  CREATIVE: 'creative' as const,
-  DIPLOMATIC: 'diplomatic' as const,
+  PROFESSIONAL: 'professional',
+  CASUAL: 'casual',
+  FORMAL: 'formal',
+  FRIENDLY: 'friendly',
+  CONFIDENT: 'confident',
+  CONSULTATIVE: 'consultative',
+  PERSUASIVE: 'persuasive',
+  EMPATHETIC: 'empathetic',
+  ANALYTICAL: 'analytical',
+  CREATIVE: 'creative',
+  DIPLOMATIC: 'diplomatic'
 } as const;
 
 export const DOCUMENT_TYPES = {
@@ -636,15 +647,6 @@ export const DOCUMENT_TYPES = {
   CASE_STUDY: 'case_study' as const,
   PRICING: 'pricing' as const,
   OTHER: 'other' as const,
-} as const;
-
-export const PRIORITY_LEVELS = {
-  LOW: 'low' as const,
-  MEDIUM: 'medium' as const,
-  HIGH: 'high' as const,
-  URGENT: 'urgent' as const,
-  CRITICAL: 'critical' as const,
-  BACKGROUND: 'background' as const,
 } as const;
 
 // =============================================================================
@@ -663,6 +665,6 @@ export function isDocumentType(value: string): value is DocumentType {
   return Object.values(DOCUMENT_TYPES).includes(value as DocumentType);
 }
 
-export function isPriorityLevel(value: string): value is PriorityLevel {
+export function isPriorityLevel(value: number): value is PriorityLevel {
   return Object.values(PRIORITY_LEVELS).includes(value as PriorityLevel);
 }

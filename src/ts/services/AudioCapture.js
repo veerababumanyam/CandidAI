@@ -69,9 +69,8 @@ export class AudioCapture {
       });
 
       // Create audio context
-      this.audioContext = new (window.AudioContext || window.webkitAudioContext)({
-        sampleRate: this.config.sampleRate,
-      });
+      const AudioContextClass = window.AudioContext || window['webkitAudioContext'];
+      this.audioContext = new AudioContextClass();
 
       // Set up audio processing pipeline
       this.setupAudioPipeline();

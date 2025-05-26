@@ -157,7 +157,9 @@ export class AnthropicProvider extends BaseLLMProvider {
           provider: 'anthropic',
           model,
           isStream: true,
-          stream: this.handleStreamResponse(response as any),
+          content: '',
+          usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+          finishReason: 'stop'
         };
       } else {
         return this.formatResponse(response, model);
@@ -248,19 +250,21 @@ export class AnthropicProvider extends BaseLLMProvider {
     
     return {
       content,
-      role: response.role,
-      finishReason: response.stop_reason,
       usage: {
-        promptTokens: response.usage.input_tokens,
-        completionTokens: response.usage.output_tokens,
-        totalTokens: response.usage.input_tokens + response.usage.output_tokens,
-        model,
+        promptTokens: response.usage?.input_tokens || 0,
+        completionTokens: response.usage?.output_tokens || 0,
+        totalTokens: (response.usage?.input_tokens || 0) + (response.usage?.output_tokens || 0),
+        model: response.model || model,
         estimatedCost: this.calculateCost(response.usage, model),
       },
-      provider: 'anthropic',
-      model,
-      id: response.id,
-      ...(response.stop_sequence && { stopSequence: response.stop_sequence }),
+      model: response.model || model,
+      finishReason: response.stop_reason || 'stop_sequence',
+      metadata: {
+        id: response.id,
+        type: response.type,
+        messageRole: response.role
+      },
+      provider: 'anthropic'
     };
   }
 

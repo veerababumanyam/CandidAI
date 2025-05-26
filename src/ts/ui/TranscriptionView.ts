@@ -3,18 +3,39 @@
  * Provides live transcription with speaker detection and confidence indicators
  */
 
+interface TranscriptEntry {
+  id: string;
+  text: string;
+  confidence: number;
+  timestamp: Date;
+  speaker: string;
+  isInterim: boolean;
+}
+
+interface TranscriptResult {
+  text: string;
+  confidence?: number;
+  timestamp?: number;
+  speaker?: string;
+  isFinal?: boolean;
+}
+
 export class TranscriptionView {
-  constructor(containerId) {
-    this.containerId = containerId;
-    this.container = null;
-    this.transcripts = [];
-    this.maxTranscripts = 50; // Keep last 50 transcripts
-    this.isAutoScroll = true;
-    
+  private container: HTMLElement | null = null;
+  private contentContainer: HTMLElement | null = null;
+  private statusIndicator: HTMLElement | null = null;
+  private statusText: HTMLElement | null = null;
+  private transcriptCount: HTMLElement | null = null;
+  private confidenceAvg: HTMLElement | null = null;
+  private transcripts: TranscriptEntry[] = [];
+  private readonly maxTranscripts: number = 50;
+  private isAutoScroll: boolean = true;
+
+  constructor(private readonly containerId: string) {
     this.initialize();
   }
 
-  initialize() {
+  private initialize(): void {
     this.container = document.getElementById(this.containerId);
     if (!this.container) {
       console.warn(`TranscriptionView: Container ${this.containerId} not found`);
@@ -25,7 +46,9 @@ export class TranscriptionView {
     this.setupEventListeners();
   }
 
-  createUI() {
+  private createUI(): void {
+    if (!this.container) return;
+
     this.container.innerHTML = `
       <div class="transcription-header">
         <div class="transcription-status">
@@ -53,9 +76,11 @@ export class TranscriptionView {
     this.confidenceAvg = this.container.querySelector('.confidence-avg');
   }
 
-  setupEventListeners() {
-    const toggleScrollBtn = this.container.querySelector('.toggle-scroll');
-    const clearBtn = this.container.querySelector('.clear-transcripts');
+  private setupEventListeners(): void {
+    if (!this.container) return;
+
+    const toggleScrollBtn = this.container.querySelector('.toggle-scroll') as HTMLButtonElement;
+    const clearBtn = this.container.querySelector('.clear-transcripts') as HTMLButtonElement;
 
     if (toggleScrollBtn) {
       toggleScrollBtn.addEventListener('click', () => {
@@ -71,10 +96,13 @@ export class TranscriptionView {
     }
   }
 
-  addTranscript(result) {
+  /**
+   * Add new transcript entry
+   */
+  addTranscript(result: TranscriptResult): void {
     if (!result || !result.text) return;
     
-    const transcript = {
+    const transcript: TranscriptEntry = {
       id: `transcript_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       text: result.text,
       confidence: result.confidence || 0,
@@ -91,13 +119,14 @@ export class TranscriptionView {
     }
     
     this.renderTranscripts();
+    this.updateStats();
     
     if (this.isAutoScroll) {
       this.scrollToBottom();
     }
   }
 
-  renderTranscripts() {
+  private renderTranscripts(): void {
     if (!this.contentContainer) return;
 
     if (this.transcripts.length === 0) {
@@ -111,13 +140,13 @@ export class TranscriptionView {
     this.contentContainer.innerHTML = transcriptHTML;
   }
 
-  createTranscriptHTML(transcript) {
+  private createTranscriptHTML(transcript: TranscriptEntry): string {
     const timeStr = transcript.timestamp.toLocaleTimeString();
     const confidenceStr = Math.round(transcript.confidence * 100);
     const confidenceClass = this.getConfidenceClass(transcript.confidence);
     
     return `
-      <div class="transcript-item ${transcript.isFinal ? 'transcript-final' : 'transcript-interim'}" data-id="${transcript.id}">
+      <div class="transcript-item ${transcript.isInterim ? 'transcript-interim' : 'transcript-final'}" data-id="${transcript.id}">
         <div class="transcript-meta">
           <span class="transcript-time">${timeStr}</span>
           <span class="transcript-speaker">${transcript.speaker}</span>
@@ -128,13 +157,13 @@ export class TranscriptionView {
     `;
   }
 
-  getConfidenceClass(confidence) {
+  private getConfidenceClass(confidence: number): string {
     if (confidence >= 0.8) return 'confidence-high';
     if (confidence >= 0.6) return 'confidence-medium';
     return 'confidence-low';
   }
 
-  updateStats() {
+  private updateStats(): void {
     if (!this.transcriptCount || !this.confidenceAvg) return;
 
     this.transcriptCount.textContent = `${this.transcripts.length} transcripts`;
@@ -147,38 +176,38 @@ export class TranscriptionView {
     }
   }
 
-  setStatus(status, text) {
+  public setStatus(status: string, text: string): void {
     if (!this.statusIndicator || !this.statusText) return;
 
     this.statusIndicator.className = `status-indicator status-${status}`;
     this.statusText.textContent = text;
   }
 
-  clearTranscripts() {
+  public clearTranscripts(): void {
     this.transcripts = [];
     this.renderTranscripts();
     this.updateStats();
     this.setStatus('ready', 'Cleared');
   }
 
-  scrollToBottom() {
+  private scrollToBottom(): void {
     if (this.contentContainer) {
       this.contentContainer.scrollTop = this.contentContainer.scrollHeight;
     }
   }
 
-  escapeHtml(text) {
+  private escapeHtml(text: string): string {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
   }
 
   // Public API methods
-  getTranscripts() {
+  public getTranscripts(): TranscriptEntry[] {
     return [...this.transcripts];
   }
 
-  exportTranscripts() {
+  public exportTranscripts(): void {
     const exportData = {
       transcripts: this.transcripts,
       exportedAt: new Date().toISOString(),
@@ -196,10 +225,10 @@ export class TranscriptionView {
     URL.revokeObjectURL(url);
   }
 
-  destroy() {
+  public destroy(): void {
     if (this.container) {
       this.container.innerHTML = '';
     }
     this.transcripts = [];
   }
-}
+} 

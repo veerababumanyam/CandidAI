@@ -577,14 +577,51 @@ export class SecureStorage implements StorageProvider, EncryptedStorage {
   /**
    * Compatibility method for getItem - alias for get method
    */
-  async getItem<T = any>(key: string): Promise<T | null> {
+  async getItem<T>(key: string): Promise<T | null> {
     return this.get<T>(key);
   }
 
   /**
    * Compatibility method for setItem - alias for set method
    */
-  async setItem<T = any>(key: string, value: T): Promise<void> {
-    return this.set<T>(key, value);
+  async setItem<T>(key: string, value: T): Promise<void> {
+    await this.set(key, value);
+  }
+
+  async removeItem(key: string): Promise<void> {
+    await this.remove(key);
+  }
+
+  async getMultiple<T>(keys: string[]): Promise<Record<string, T>> {
+    const result: Record<string, T> = {};
+    for (const key of keys) {
+      const value = await this.get<T>(key);
+      if (value !== null) {
+        result[key] = value;
+      }
+    }
+    return result;
+  }
+
+  async setMultiple<T>(items: Record<string, T>): Promise<void> {
+    for (const [key, value] of Object.entries(items)) {
+      await this.set(key, value);
+    }
+  }
+
+  async setEncrypted<T>(key: string, value: T): Promise<void> {
+    const encrypted = await this.encrypt(value);
+    await this.set(key, encrypted);
+  }
+
+  async getEncrypted<T>(key: string): Promise<T | null> {
+    const encrypted = await this.get<string>(key);
+    if (!encrypted) return null;
+    try {
+      return await this.decrypt(encrypted);
+    } catch (error) {
+      console.error('Failed to decrypt data:', error);
+      return null;
+    }
   }
 } 

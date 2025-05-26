@@ -506,6 +506,13 @@ export const CALL_TYPES = {
   MEETING: 'meeting', 
   PRESENTATION: 'presentation',
   TRAINING: 'training',
+  SALES_PITCH: 'sales_pitch',
+  SALES_CALL: 'sales_call',
+  CLIENT_MEETING: 'client_meeting',
+  TEAM_MEETING: 'team_meeting',
+  ONE_ON_ONE: 'one_on_one',
+  PERFORMANCE_REVIEW: 'performance_review',
+  BRAINSTORMING: 'brainstorming',
 } as const;
 
 export const TONE_TYPES = {
@@ -513,6 +520,13 @@ export const TONE_TYPES = {
   CASUAL: 'casual',
   FORMAL: 'formal',
   FRIENDLY: 'friendly',
+  CONFIDENT: 'confident',
+  CONSULTATIVE: 'consultative',
+  PERSUASIVE: 'persuasive',
+  EMPATHETIC: 'empathetic',
+  ANALYTICAL: 'analytical',
+  CREATIVE: 'creative',
+  DIPLOMATIC: 'diplomatic',
 } as const;
 
 export const CALL_TYPE_CONFIGS = {
@@ -605,6 +619,7 @@ export const PRIORITY_LEVELS = {
   HIGH: 3,
   URGENT: 4,
   CRITICAL: 5,
+  BACKGROUND: 0, // Background priority for non-urgent processing
 } as const;
 
 export const DOCUMENT_PROCESSING_CONFIG = {
@@ -618,6 +633,7 @@ export const DOCUMENT_PROCESSING_CONFIG = {
     'application/rtf',
   ],
   PROCESSING_TIMEOUT: 30000, // 30 seconds
+  MAX_CONCURRENT_PROCESSING: 3, // Max number of documents processing concurrently
 } as const;
 
 // =============================================================================

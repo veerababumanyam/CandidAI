@@ -40,9 +40,9 @@ export interface MetricsConfig {
 }
 
 export interface InterviewTranscription extends TranscriptionData {
-  timestamp: number;
+  timestamp: Date;
   text: string;
-  confidence?: number;
+  confidence: number;
   isQuestion?: boolean;
   speaker?: string;
 }
@@ -267,7 +267,9 @@ export class PerformanceAnalyzer {
 
     const transcriptionEntry: InterviewTranscription = {
       ...entry,
-      timestamp: Date.now(),
+      timestamp: typeof entry.timestamp === 'object' && entry.timestamp instanceof Date 
+        ? entry.timestamp 
+        : new Date(entry.timestamp || Date.now()),
     };
 
     interview.transcription.push(transcriptionEntry);
@@ -276,7 +278,9 @@ export class PerformanceAnalyzer {
     if (entry.isQuestion) {
       interview.questions.push({
         text: entry.text,
-        timestamp: entry.timestamp || Date.now(),
+        timestamp: typeof entry.timestamp === 'object' && entry.timestamp instanceof Date 
+          ? entry.timestamp.getTime() 
+          : (entry.timestamp || Date.now()),
         type: this.categorizeQuestion(entry.text),
       });
     }
@@ -293,8 +297,8 @@ export class PerformanceAnalyzer {
 
     const interviewSuggestion: InterviewSuggestion = {
       ...suggestion,
-      timestamp: Date.now(),
-      wasUsed: false, // Track if user incorporated suggestion
+      timestamp: new Date(Date.now()),
+      wasUsed: false,
     };
 
     interview.suggestions.push(interviewSuggestion);
@@ -326,21 +330,19 @@ export class PerformanceAnalyzer {
 
     return {
       sessionId: interviewId,
-      startTime: interview.startTime,
-      endTime: interview.endTime,
-      totalDuration: interview.duration,
-      measurements: Array.from(this.completedMeasurements.values()),
-      events: this.eventLog,
-      transcriptionCount: interview.transcription.length,
-      suggestionCount: interview.suggestions.length,
-      averageResponseTime: interview.metrics?.timing.averageResponseTime || 0,
-      errorCount: this.errorLog.length,
-      errors: this.errorLog,
-      summary: {
-        accuracy: interview.metrics?.technical.accuracy,
-        efficiency: interview.score || 0,
-        userSatisfaction: interview.metrics?.engagement.activeListening,
+      startTime: new Date(interview.startTime),
+      duration: interview.duration || 0,
+      metrics: {
+        responseTime: interview.metrics?.engagement.averageResponseTime || 0,
+        accuracy: interview.metrics?.technical.accuracy || 0,
+        relevanceScore: interview.metrics?.content.relevance || 0,
+        documentsProcessed: 0,
+        suggestionsProvided: interview.suggestions.length,
+        successfulInteractions: interview.suggestions.filter(s => s.wasUsed).length
       },
+      events: this.eventLog,
+      interviews: [],
+      generatedAt: new Date()
     };
   }
 
@@ -385,7 +387,9 @@ export class PerformanceAnalyzer {
 
     // Calculate average pace (words per minute)
     const speakingTime = userTranscriptions.reduce(
-      (sum, entry) => sum + (entry.timestamp || 0),
+      (sum, entry) => sum + (typeof entry.timestamp === 'object' && entry.timestamp instanceof Date 
+        ? entry.timestamp.getTime() 
+        : (entry.timestamp || 0)),
       0
     );
     const averagePace = speakingTime > 0 ? (totalWords / speakingTime) * 60000 : 0;
@@ -446,7 +450,10 @@ export class PerformanceAnalyzer {
       const question = questions[i];
       
       if (response && question) {
-        const responseTime = response.timestamp - question.timestamp;
+        const responseTimestamp = typeof response.timestamp === 'object' && response.timestamp instanceof Date 
+          ? response.timestamp.getTime() 
+          : (response.timestamp || Date.now());
+        const responseTime = responseTimestamp - question.timestamp;
         totalResponseTime += responseTime;
 
         if (responseTime > this.metricsConfig.engagementMetrics.questionResponseTime) {
@@ -785,9 +792,10 @@ export class PerformanceAnalyzer {
     }
 
     const event: PerformanceEvent = {
-      type: eventName,
+      name: eventName,
+      type: 'info',
       timestamp: Date.now(),
-      data: details,
+      data: details
     };
 
     this.eventLog.push(event);

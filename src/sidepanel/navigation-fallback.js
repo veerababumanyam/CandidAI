@@ -20,7 +20,9 @@
       // Initially hide all panels except the active one
       panels.forEach(panel => {
         if (!panel.classList.contains('ca-panel--active')) {
-          panel.style.display = 'none';
+          if (panel instanceof HTMLElement) {
+            panel.style.display = 'none';
+          }
         }
       });
       
@@ -34,8 +36,10 @@
           if (targetPanel) {
             // Hide all panels
             panels.forEach(p => {
-              p.style.display = 'none';
-              p.classList.remove('ca-panel--active');
+              if (p instanceof HTMLElement) {
+                p.style.display = 'none';
+                p.classList.remove('ca-panel--active');
+              }
             });
             
             // Remove active class from all tabs
@@ -45,8 +49,10 @@
             });
             
             // Show target panel
-            targetPanel.style.display = 'block';
-            targetPanel.classList.add('ca-panel--active');
+            if (targetPanel instanceof HTMLElement) {
+              targetPanel.style.display = 'block';
+              targetPanel.classList.add('ca-panel--active');
+            }
             
             // Activate clicked tab
             this.classList.add('ca-tabs__tab--active');
@@ -68,7 +74,9 @@
       // Initially hide all sections except the active one
       sections.forEach(section => {
         if (!section.classList.contains('ca-section--active')) {
-          section.style.display = 'none';
+          if (section instanceof HTMLElement) {
+            section.style.display = 'none';
+          }
         }
       });
       
@@ -82,8 +90,10 @@
           if (targetSection) {
             // Hide all sections
             sections.forEach(s => {
-              s.style.display = 'none';
-              s.classList.remove('ca-section--active');
+              if (s instanceof HTMLElement) {
+                s.style.display = 'none';
+                s.classList.remove('ca-section--active');
+              }
             });
             
             // Remove active class from all nav buttons
@@ -92,8 +102,10 @@
             });
             
             // Show target section
-            targetSection.style.display = 'block';
-            targetSection.classList.add('ca-section--active');
+            if (targetSection instanceof HTMLElement) {
+              targetSection.style.display = 'block';
+              targetSection.classList.add('ca-section--active');
+            }
             
             // Activate clicked button
             this.classList.add('ca-nav__button--active');

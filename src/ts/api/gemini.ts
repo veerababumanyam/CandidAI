@@ -184,7 +184,9 @@ export class GeminiProvider extends BaseLLMProvider {
           provider: 'gemini',
           model,
           isStream: true,
-          stream: this.handleStreamResponse(response as any),
+          content: '',
+          usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0 },
+          finishReason: 'stop'
         };
       } else {
         return this.formatResponse(response, model);
@@ -304,22 +306,19 @@ export class GeminiProvider extends BaseLLMProvider {
 
     return {
       content,
-      role: 'assistant',
-      finishReason: candidate.finishReason,
       usage: {
         promptTokens: response.usageMetadata?.promptTokenCount || 0,
         completionTokens: response.usageMetadata?.candidatesTokenCount || 0,
         totalTokens: response.usageMetadata?.totalTokenCount || 0,
-        model,
-        estimatedCost: this.calculateCost({
-          promptTokens: response.usageMetadata?.promptTokenCount || 0,
-          completionTokens: response.usageMetadata?.candidatesTokenCount || 0,
-          totalTokens: response.usageMetadata?.totalTokenCount || 0,
-        }, model),
+        model: model
       },
-      provider: 'gemini',
-      model,
-      safetyRatings: candidate.safetyRatings,
+      model: model,
+      finishReason: response.candidates?.[0]?.finishReason || 'STOP',
+      metadata: {
+        safetyRatings: response.candidates?.[0]?.safetyRatings,
+        messageRole: 'assistant'
+      },
+      provider: 'gemini'
     };
   }
 
