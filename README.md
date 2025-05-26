@@ -1,4 +1,4 @@
-# CandidAI - Professional Maating Assistant Chrome Extension
+# CandidAI - Professional Meeting Assistant Chrome Extension
 
 <div align="center">
   <img src="logo.png" alt="CandidAI Logo" width="200" height="200" style="border-radius: 15px; margin: 20px 0;">
