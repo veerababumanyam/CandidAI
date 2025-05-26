@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drag & Drop Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .test-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .sortable-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .sortable-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            margin: 8px 0;
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            cursor: move;
+            transition: all 0.2s ease;
+        }
+        
+        .sortable-item:hover {
+            background: #e3f2fd;
+            border-color: #2196f3;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(33, 150, 243, 0.2);
+        }
+        
+        .sortable-item.sortable-chosen {
+            background: #e3f2fd;
+            border-color: #2196f3;
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+        
+        .sortable-item.sortable-ghost {
+            opacity: 0.4;
+            background: #fafafa;
+            border-style: dashed;
+        }
+        
+        .item-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .item-icon {
+            width: 24px;
+            height: 24px;
+            background: #2196f3;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        .item-name {
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        .drag-handle {
+            width: 24px;
+            height: 24px;
+            background: #6c757d;
+            border-radius: 4px;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.7;
+            transition: all 0.2s ease;
+        }
+        
+        .drag-handle:hover {
+            background: #495057;
+            opacity: 1;
+            transform: scale(1.1);
+        }
+        
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+        
+        .status {
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        
+        .status.loading {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .status.ready {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🎯 Drag & Drop Test</h1>
+        <p>This tests the same drag and drop functionality used in CandidAI's fallback order configuration.</p>
+        
+        <div id="status" class="status loading">⏳ Loading SortableJS...</div>
+        
+        <div id="sortable-container">
+            <h3>LLM Provider Fallback Order</h3>
+            <p>Drag the handles (⋮⋮) to reorder:</p>
+            
+            <ul id="sortable-list" class="sortable-list">
+                <li class="sortable-item" data-provider="openai">
+                    <div class="item-content">
+                        <div class="item-icon">O</div>
+                        <span class="item-name">OpenAI GPT</span>
+                        <span class="priority">Priority: 1</span>
+                    </div>
+                    <div class="drag-handle" title="Drag to reorder">⋮⋮</div>
+                </li>
+                <li class="sortable-item" data-provider="anthropic">
+                    <div class="item-content">
+                        <div class="item-icon">A</div>
+                        <span class="item-name">Anthropic Claude</span>
+                        <span class="priority">Priority: 2</span>
+                    </div>
+                    <div class="drag-handle" title="Drag to reorder">⋮⋮</div>
+                </li>
+                <li class="sortable-item" data-provider="gemini">
+                    <div class="item-content">
+                        <div class="item-icon">G</div>
+                        <span class="item-name">Google Gemini</span>
+                        <span class="priority">Priority: 3</span>
+                    </div>
+                    <div class="drag-handle" title="Drag to reorder">⋮⋮</div>
+                </li>
+            </ul>
+        </div>
+        
+        <div id="order-display" style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 6px;">
+            <strong>Current Order:</strong> <span id="current-order">Loading...</span>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script>
+        const statusEl = document.getElementById('status');
+        const listEl = document.getElementById('sortable-list');
+        const orderEl = document.getElementById('current-order');
+        
+        function updateStatus(type, message) {
+            statusEl.className = `status ${type}`;
+            statusEl.innerHTML = message;
+        }
+        
+        function updateOrder() {
+            const items = listEl.querySelectorAll('.sortable-item');
+            const order = Array.from(items).map((item, index) => {
+                const provider = item.dataset.provider;
+                const priorityEl = item.querySelector('.priority');
+                priorityEl.textContent = `Priority: ${index + 1}`;
+                return `${index + 1}. ${provider}`;
+            });
+            orderEl.textContent = order.join(' → ');
+        }
+        
+        // Initialize when SortableJS loads
+        window.addEventListener('load', () => {
+            if (typeof Sortable === 'undefined') {
+                updateStatus('error', '❌ SortableJS failed to load');
+                return;
+            }
+            
+            updateStatus('ready', '✅ Ready to drag and drop!');
+            updateOrder();
+            
+            // Initialize Sortable
+            new Sortable(listEl, {
+                animation: 200,
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                handle: '.drag-handle',
+                
+                onStart: (evt) => {
+                    console.log('🎯 Drag started from position:', evt.oldIndex);
+                    updateStatus('ready', '🔄 Dragging... Drop to reorder');
+                },
+                
+                onEnd: (evt) => {
+                    console.log('✅ Drag completed:', evt.oldIndex, '→', evt.newIndex);
+                    updateStatus('ready', '✅ Order updated! Try dragging again.');
+                    updateOrder();
+                    
+                    if (evt.oldIndex !== evt.newIndex) {
+                        console.log('📊 New order:', Array.from(listEl.querySelectorAll('.sortable-item')).map(item => item.dataset.provider));
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html> 
