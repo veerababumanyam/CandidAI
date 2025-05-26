@@ -14,7 +14,10 @@
     "https://*.zoom.us/*",
     "https://teams.microsoft.com/*",
     "https://*.linkedin.com/*",
-    "https://*.hirevue.com/*"
+    "https://*.hirevue.com/*",
+    "https://api.openai.com/*",
+    "https://api.anthropic.com/*",
+    "https://generativelanguage.googleapis.com/*"
   ],
 
   "background": {

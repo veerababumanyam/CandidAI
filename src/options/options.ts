@@ -18,6 +18,13 @@ interface OptionsState {
   configuration: Partial<AppConfig>;
 }
 
+// Declare global Sortable type
+declare global {
+  interface Window {
+    Sortable: any;
+  }
+}
+
 // =============================================================================
 // OPTIONS CONTROLLER
 // =============================================================================
@@ -178,14 +185,14 @@ class OptionsController {
     console.log(`📍 Found ${allSections.length} sections`);
     allSections.forEach(section => {
       section.classList.remove('ca-section--active');
-      section.style.display = 'none';
+      (section as HTMLElement).style.display = 'none';
     });
 
     // Show target section
     const targetSection = document.querySelector(`#section-${targetSectionName}`);
     if (targetSection) {
       targetSection.classList.add('ca-section--active');
-      targetSection.style.display = 'block';
+      (targetSection as HTMLElement).style.display = 'block';
       console.log(`✅ Showed section: section-${targetSectionName}`);
     } else {
       console.error(`❌ Section not found: section-${targetSectionName}`);
@@ -619,40 +626,116 @@ class OptionsController {
   private async testAPIConnections(): Promise<void> {
     const keys = this.getAPIKeys();
     const results = { openai: false, anthropic: false, gemini: false };
+    const detailedResults: { [key: string]: { success: boolean; error?: string } } = {};
     
     this.showToast('Testing API connections...', 'info');
     
     try {
       // Test OpenAI
       if (keys.openai) {
-        results.openai = await this.testOpenAIConnection(keys.openai);
+        try {
+          results.openai = await this.testOpenAIConnection(keys.openai);
+          detailedResults.openai = { success: results.openai };
+          if (!results.openai) {
+            detailedResults.openai.error = 'Invalid API key or connection failed';
+          }
+        } catch (error) {
+          results.openai = false;
+          detailedResults.openai = { 
+            success: false, 
+            error: error instanceof Error ? error.message : 'Connection failed' 
+          };
+        }
       }
       
       // Test Anthropic
       if (keys.anthropic) {
-        results.anthropic = await this.testAnthropicConnection(keys.anthropic);
+        try {
+          results.anthropic = await this.testAnthropicConnection(keys.anthropic);
+          detailedResults.anthropic = { success: results.anthropic };
+          if (!results.anthropic) {
+            detailedResults.anthropic.error = 'Invalid API key or connection failed';
+          }
+        } catch (error) {
+          results.anthropic = false;
+          detailedResults.anthropic = { 
+            success: false, 
+            error: error instanceof Error ? error.message : 'Connection failed' 
+          };
+        }
       }
       
       // Test Gemini
       if (keys.gemini) {
-        results.gemini = await this.testGeminiConnection(keys.gemini);
+        try {
+          results.gemini = await this.testGeminiConnection(keys.gemini);
+          detailedResults.gemini = { success: results.gemini };
+          if (!results.gemini) {
+            detailedResults.gemini.error = 'Invalid API key or connection failed';
+          }
+        } catch (error) {
+          results.gemini = false;
+          detailedResults.gemini = { 
+            success: false, 
+            error: error instanceof Error ? error.message : 'Connection failed' 
+          };
+        }
       }
       
-      // Show results
+      // Show detailed results
       const successCount = Object.values(results).filter(Boolean).length;
       const totalTests = Object.values(keys).filter(Boolean).length;
       
-      if (successCount === totalTests && totalTests > 0) {
-        this.showToast(`✅ All ${successCount} API connections successful!`, 'success');
-      } else {
-        this.showToast(`⚠️ ${successCount}/${totalTests} API connections successful`, 'warning');
+      if (totalTests === 0) {
+        this.showToast('⚠️ No API keys found to test. Please enter your API keys first.', 'warning');
+        return;
       }
       
-      console.log('🔑 API Test Results:', results);
+      // Create detailed feedback message
+      const providerNames = { openai: 'OpenAI', anthropic: 'Anthropic', gemini: 'Google Gemini' };
+      const successfulProviders: string[] = [];
+      const failedProviders: string[] = [];
+      
+      for (const [provider, result] of Object.entries(detailedResults)) {
+        if (result.success) {
+          successfulProviders.push(providerNames[provider as keyof typeof providerNames]);
+        } else {
+          failedProviders.push(
+            `${providerNames[provider as keyof typeof providerNames]}: ${result.error || 'Unknown error'}`
+          );
+        }
+      }
+      
+      if (successCount === totalTests) {
+        // All tests passed
+        this.showToast(
+          `✅ All API connections successful!\n${successfulProviders.join(', ')} are working properly.`, 
+          'success'
+        );
+      } else if (successCount > 0) {
+        // Some passed, some failed
+        let message = `⚠️ ${successCount}/${totalTests} API connections successful\n\n`;
+        
+        if (successfulProviders.length > 0) {
+          message += `✅ Working: ${successfulProviders.join(', ')}\n`;
+        }
+        
+        if (failedProviders.length > 0) {
+          message += `❌ Failed: \n${failedProviders.map(f => `• ${f}`).join('\n')}`;
+        }
+        
+        this.showToast(message, 'warning');
+      } else {
+        // All tests failed
+        const message = `❌ All API connections failed:\n${failedProviders.map(f => `• ${f}`).join('\n')}\n\nPlease check your API keys and try again.`;
+        this.showToast(message, 'error');
+      }
+      
+      console.log('🔑 Detailed API Test Results:', detailedResults);
       
     } catch (error) {
       console.error('API testing error:', error);
-      this.showToast('API testing failed. Check console for details.', 'error');
+      this.showToast('❌ API testing failed. Check console for details.', 'error');
     }
   }
 
@@ -664,10 +747,23 @@ class OptionsController {
       const response = await fetch('https://api.openai.com/v1/models', {
         headers: { 'Authorization': `Bearer ${apiKey}` }
       });
-      return response.ok;
+      
+      if (response.ok) {
+        return true;
+      } else if (response.status === 401) {
+        throw new Error('Invalid OpenAI API key');
+      } else if (response.status === 429) {
+        throw new Error('OpenAI API rate limit exceeded');
+      } else if (response.status >= 500) {
+        throw new Error('OpenAI server error');
+      } else {
+        throw new Error(`OpenAI API error (${response.status})`);
+      }
     } catch (error) {
-      console.error('OpenAI test failed:', error);
-      return false;
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error('Network connection failed - check your internet connection');
+      }
+      throw error;
     }
   }
 
@@ -676,23 +772,65 @@ class OptionsController {
    */
   private async testAnthropicConnection(apiKey: string): Promise<boolean> {
     try {
+      // Anthropic requires a POST request to /v1/messages with a minimal valid payload
+      // Also requires the special CORS header for browser-based requests
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01'
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
         },
         body: JSON.stringify({
           model: 'claude-3-haiku-20240307',
           max_tokens: 1,
-          messages: [{ role: 'user', content: 'test' }]
+          messages: [{ role: 'user', content: 'Hi' }]
         })
       });
-      return response.ok || response.status === 400; // 400 is expected for minimal request
+      
+      // For Anthropic, we check for specific status codes:
+      // - 200: Success (API key valid and request successful)
+      // - 400: Bad request but API key is valid (expected for minimal requests)
+      // - 401: Invalid API key (this is what we want to catch)
+      // - 403: Forbidden (API key valid but lacks permissions)
+      // - 429: Rate limited (API key valid but rate limited)
+      // - 5xx: Server error (API key likely valid, server issue)
+      
+      if (response.status >= 200 && response.status < 300) {
+        // Success response - API key is definitely valid
+        return true;
+      } else if (response.status === 400) {
+        // Bad request - usually means API key is valid but request format issue
+        // For our minimal test, this often happens and indicates the key works
+        return true;
+      } else if (response.status === 401) {
+        // Unauthorized - invalid API key
+        throw new Error('Invalid Anthropic API key');
+      } else if (response.status === 403) {
+        // Forbidden - API key valid but lacks permissions
+        throw new Error('Anthropic API key lacks required permissions');
+      } else if (response.status === 429) {
+        // Rate limited - API key is valid but rate limited
+        throw new Error('Anthropic API rate limit exceeded');
+      } else if (response.status >= 500) {
+        // Server error - API key likely valid, server issue
+        throw new Error('Anthropic server error');
+      } else {
+        // Other error codes
+        throw new Error(`Anthropic API error (${response.status})`);
+      }
     } catch (error) {
-      console.error('Anthropic test failed:', error);
-      return false;
+      // Handle network errors specifically
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error('Network connection failed - check your internet connection');
+      }
+      // If it's already our custom error, re-throw it
+      if (error instanceof Error) {
+        throw error;
+      }
+      // Fallback for unknown errors
+      throw new Error('Unknown error occurred while testing Anthropic API');
     }
   }
 
@@ -701,11 +839,39 @@ class OptionsController {
    */
   private async testGeminiConnection(apiKey: string): Promise<boolean> {
     try {
+      // Validate API key format
+      if (!apiKey.startsWith('AIza')) {
+        throw new Error('Invalid Google Gemini API key format - should start with "AIza"');
+      }
+      
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-      return response.ok;
+      
+      if (response.ok) {
+        // Verify we actually get model data
+        const data = await response.json();
+        if (data.models && data.models.length > 0) {
+          return true;
+        } else {
+          throw new Error('No models available with this Google Gemini API key');
+        }
+      } else if (response.status === 400) {
+        const errorData = await response.json().catch(() => null);
+        const errorMessage = errorData?.error?.message || 'Invalid request format';
+        throw new Error(`Google Gemini API error: ${errorMessage}`);
+      } else if (response.status === 403) {
+        throw new Error('Google Gemini API access forbidden - check your API key permissions and billing');
+      } else if (response.status === 429) {
+        throw new Error('Google Gemini API rate limit exceeded');
+      } else if (response.status >= 500) {
+        throw new Error('Google Gemini server error');
+      } else {
+        throw new Error(`Google Gemini API error (${response.status})`);
+      }
     } catch (error) {
-      console.error('Gemini test failed:', error);
-      return false;
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error('Network connection failed - check your internet connection');
+      }
+      throw error;
     }
   }
 
@@ -886,12 +1052,15 @@ class OptionsController {
   private showToast(message: string, type: 'success' | 'error' | 'info' | 'warning' = 'info'): void {
     console.log(`🍞 TOAST ${type.toUpperCase()}: ${message}`);
     
+    // Convert newlines to HTML breaks for better display
+    const formattedMessage = message.replace(/\n/g, '<br>');
+    
     // Create toast element
     const toast = document.createElement('div');
     toast.className = `toast toast--${type}`;
     toast.innerHTML = `
       <div class="toast__content">
-        <span class="toast__message">${message}</span>
+        <div class="toast__message">${formattedMessage}</div>
         <button class="toast__close" onclick="this.parentElement.parentElement.remove()">×</button>
       </div>
     `;
@@ -909,7 +1078,8 @@ class OptionsController {
           border-radius: 8px;
           box-shadow: 0 4px 12px rgba(0,0,0,0.15);
           z-index: 10000;
-          min-width: 300px;
+          min-width: 350px;
+          max-width: 500px;
           animation: slideIn 0.3s ease;
         }
         .toast--success { border-left: 4px solid #10b981; }
@@ -918,11 +1088,17 @@ class OptionsController {
         .toast--info { border-left: 4px solid #3b82f6; }
         .toast__content {
           display: flex;
-          align-items: center;
+          align-items: flex-start;
           justify-content: space-between;
-          padding: 12px 16px;
+          padding: 16px;
         }
-        .toast__message { flex: 1; font-size: 14px; }
+        .toast__message { 
+          flex: 1; 
+          font-size: 14px; 
+          line-height: 1.5;
+          word-wrap: break-word;
+          white-space: pre-wrap;
+        }
         .toast__close {
           background: none;
           border: none;
@@ -930,6 +1106,11 @@ class OptionsController {
           cursor: pointer;
           color: #666;
           margin-left: 12px;
+          align-self: flex-start;
+          margin-top: -2px;
+        }
+        .toast__close:hover {
+          color: #333;
         }
         @keyframes slideIn {
           from { transform: translateX(100%); opacity: 0; }
@@ -942,12 +1123,13 @@ class OptionsController {
     // Add to page
     document.body.appendChild(toast);
     
-    // Remove after 5 seconds
+    // Remove after 8 seconds for longer messages, 5 seconds for shorter ones
+    const duration = message.length > 100 ? 8000 : 5000;
     setTimeout(() => {
       if (toast.parentElement) {
         toast.remove();
       }
-    }, 5000);
+    }, duration);
   }
 
   /**
