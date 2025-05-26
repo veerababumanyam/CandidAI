@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "CandidAI - Interview Assistant",
   "description": "AI-powered real-time interview assistance with advanced LLM orchestration and contextual awareness",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "author": "CandidAI Team",
 
   "permissions": ["storage", "activeTab", "scripting", "sidePanel", "notifications", "offscreen"],
